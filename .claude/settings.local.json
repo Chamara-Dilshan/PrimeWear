@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:support.payhere.lk)",
+      "Bash(npx create-next-app:*)",
+      "Bash(dir:*)",
+      "Bash(npm install:*)",
+      "Bash(npx shadcn@latest add:*)",
+      "Bash(npx prisma init:*)",
+      "Bash(npx prisma generate:*)",
+      "Bash(npm uninstall:*)",
+      "Bash(git add:*)"
+    ]
+  }
+}
