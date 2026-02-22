@@ -249,4 +249,1080 @@ export const emailService = {
       return { success: false, error };
     }
   },
+
+  /**
+   * Send order payment confirmed email
+   */
+  async sendOrderPaymentConfirmedEmail(
+    to: string,
+    data: {
+      customerName: string;
+      orderNumber: string;
+      amount: number;
+      orderLink: string;
+    }
+  ) {
+    try {
+      const { data: result, error } = await resend.emails.send({
+        from: EMAIL_FROM,
+        to,
+        subject: `${APP_NAME} - Payment Confirmed for Order ${data.orderNumber}`,
+        html: `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Payment Confirmed</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f4f4f5;">
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+    <tr>
+      <td align="center" style="padding: 40px 20px;">
+        <table role="presentation" width="600" cellspacing="0" cellpadding="0" border="0" style="background-color: #ffffff; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+          <!-- Header -->
+          <tr>
+            <td style="padding: 40px 40px 20px; text-align: center; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 8px 8px 0 0;">
+              <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: 700;">${APP_NAME}</h1>
+            </td>
+          </tr>
+
+          <!-- Content -->
+          <tr>
+            <td style="padding: 40px;">
+              <h2 style="margin: 0 0 20px; color: #18181b; font-size: 24px; font-weight: 600;">✓ Payment Confirmed</h2>
+              <p style="margin: 0 0 20px; color: #52525b; font-size: 16px; line-height: 1.5;">Hi ${data.customerName},</p>
+              <p style="margin: 0 0 30px; color: #52525b; font-size: 16px; line-height: 1.5;">Your payment has been successfully processed! Your order is now being prepared.</p>
+
+              <!-- Order Info Box -->
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+                <tr>
+                  <td style="padding: 20px; background-color: #f0fdf4; border-left: 4px solid #22c55e; border-radius: 8px;">
+                    <p style="margin: 0 0 8px; color: #166534; font-size: 14px;"><strong>Order Number:</strong> ${data.orderNumber}</p>
+                    <p style="margin: 0; color: #166534; font-size: 14px;"><strong>Amount Paid:</strong> Rs. ${data.amount.toFixed(2)}</p>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- CTA Button -->
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+                <tr>
+                  <td align="center" style="padding: 30px 0 20px;">
+                    <a href="${process.env.NEXT_PUBLIC_APP_URL}${data.orderLink}" style="display: inline-block; padding: 14px 32px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: #ffffff; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 16px;">View Order Details</a>
+                  </td>
+                </tr>
+              </table>
+
+              <p style="margin: 0; color: #71717a; font-size: 14px; line-height: 1.5;">You'll receive updates as your order is processed and shipped.</p>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="padding: 20px 40px 40px; text-align: center; color: #a1a1aa; font-size: 12px; border-top: 1px solid #e4e4e7;">
+              <p style="margin: 0;">© ${new Date().getFullYear()} ${APP_NAME}. All rights reserved.</p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+        `,
+      });
+
+      if (error) {
+        console.error("Failed to send order payment confirmed email:", error);
+        return { success: false, error };
+      }
+
+      return { success: true, data: result };
+    } catch (error) {
+      console.error("Error sending order payment confirmed email:", error);
+      return { success: false, error };
+    }
+  },
+
+  /**
+   * Send order cancelled email
+   */
+  async sendOrderCancelledEmail(
+    to: string,
+    data: {
+      customerName: string;
+      orderNumber: string;
+      refundAmount?: number;
+      orderLink: string;
+    }
+  ) {
+    try {
+      const { data: result, error } = await resend.emails.send({
+        from: EMAIL_FROM,
+        to,
+        subject: `${APP_NAME} - Order ${data.orderNumber} Cancelled`,
+        html: `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Order Cancelled</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f4f4f5;">
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+    <tr>
+      <td align="center" style="padding: 40px 20px;">
+        <table role="presentation" width="600" cellspacing="0" cellpadding="0" border="0" style="background-color: #ffffff; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+          <!-- Header -->
+          <tr>
+            <td style="padding: 40px 40px 20px; text-align: center; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 8px 8px 0 0;">
+              <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: 700;">${APP_NAME}</h1>
+            </td>
+          </tr>
+
+          <!-- Content -->
+          <tr>
+            <td style="padding: 40px;">
+              <h2 style="margin: 0 0 20px; color: #18181b; font-size: 24px; font-weight: 600;">Order Cancelled</h2>
+              <p style="margin: 0 0 20px; color: #52525b; font-size: 16px; line-height: 1.5;">Hi ${data.customerName},</p>
+              <p style="margin: 0 0 30px; color: #52525b; font-size: 16px; line-height: 1.5;">Your order <strong>${data.orderNumber}</strong> has been cancelled.</p>
+
+              ${
+                data.refundAmount
+                  ? `
+              <!-- Refund Info Box -->
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+                <tr>
+                  <td style="padding: 20px; background-color: #eff6ff; border-left: 4px solid #3b82f6; border-radius: 8px;">
+                    <p style="margin: 0; color: #1e40af; font-size: 14px;"><strong>Refund Amount:</strong> Rs. ${data.refundAmount.toFixed(2)} has been credited to your wallet.</p>
+                  </td>
+                </tr>
+              </table>
+              `
+                  : ""
+              }
+
+              <p style="margin: 30px 0 0; color: #71717a; font-size: 14px; line-height: 1.5;">If you have any questions, please contact our support team.</p>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="padding: 20px 40px 40px; text-align: center; color: #a1a1aa; font-size: 12px; border-top: 1px solid #e4e4e7;">
+              <p style="margin: 0;">© ${new Date().getFullYear()} ${APP_NAME}. All rights reserved.</p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+        `,
+      });
+
+      if (error) {
+        console.error("Failed to send order cancelled email:", error);
+        return { success: false, error };
+      }
+
+      return { success: true, data: result };
+    } catch (error) {
+      console.error("Error sending order cancelled email:", error);
+      return { success: false, error };
+    }
+  },
+
+  /**
+   * Send order item shipped email
+   */
+  async sendOrderItemShippedEmail(
+    to: string,
+    data: {
+      customerName: string;
+      orderNumber: string;
+      productName: string;
+      vendorName: string;
+      trackingNumber?: string;
+      orderLink: string;
+    }
+  ) {
+    try {
+      const { data: result, error } = await resend.emails.send({
+        from: EMAIL_FROM,
+        to,
+        subject: `${APP_NAME} - Item Shipped for Order ${data.orderNumber}`,
+        html: `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Item Shipped</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f4f4f5;">
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+    <tr>
+      <td align="center" style="padding: 40px 20px;">
+        <table role="presentation" width="600" cellspacing="0" cellpadding="0" border="0" style="background-color: #ffffff; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+          <!-- Header -->
+          <tr>
+            <td style="padding: 40px 40px 20px; text-align: center; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 8px 8px 0 0;">
+              <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: 700;">${APP_NAME}</h1>
+            </td>
+          </tr>
+
+          <!-- Content -->
+          <tr>
+            <td style="padding: 40px;">
+              <h2 style="margin: 0 0 20px; color: #18181b; font-size: 24px; font-weight: 600;">📦 Item Shipped!</h2>
+              <p style="margin: 0 0 20px; color: #52525b; font-size: 16px; line-height: 1.5;">Hi ${data.customerName},</p>
+              <p style="margin: 0 0 30px; color: #52525b; font-size: 16px; line-height: 1.5;">Great news! ${data.vendorName} has shipped your order item.</p>
+
+              <!-- Shipping Info Box -->
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+                <tr>
+                  <td style="padding: 20px; background-color: #f0fdf4; border-left: 4px solid #22c55e; border-radius: 8px;">
+                    <p style="margin: 0 0 8px; color: #166534; font-size: 14px;"><strong>Order:</strong> ${data.orderNumber}</p>
+                    <p style="margin: 0 0 8px; color: #166534; font-size: 14px;"><strong>Product:</strong> ${data.productName}</p>
+                    ${
+                      data.trackingNumber
+                        ? `<p style="margin: 0; color: #166534; font-size: 14px;"><strong>Tracking Number:</strong> ${data.trackingNumber}</p>`
+                        : ""
+                    }
+                  </td>
+                </tr>
+              </table>
+
+              <!-- CTA Button -->
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+                <tr>
+                  <td align="center" style="padding: 30px 0 20px;">
+                    <a href="${process.env.NEXT_PUBLIC_APP_URL}${data.orderLink}" style="display: inline-block; padding: 14px 32px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: #ffffff; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 16px;">Track Order</a>
+                  </td>
+                </tr>
+              </table>
+
+              <p style="margin: 0; color: #71717a; font-size: 14px; line-height: 1.5;">Your order is on its way! You'll receive it soon.</p>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="padding: 20px 40px 40px; text-align: center; color: #a1a1aa; font-size: 12px; border-top: 1px solid #e4e4e7;">
+              <p style="margin: 0;">© ${new Date().getFullYear()} ${APP_NAME}. All rights reserved.</p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+        `,
+      });
+
+      if (error) {
+        console.error("Failed to send order item shipped email:", error);
+        return { success: false, error };
+      }
+
+      return { success: true, data: result };
+    } catch (error) {
+      console.error("Error sending order item shipped email:", error);
+      return { success: false, error };
+    }
+  },
+
+  /**
+   * Send order item processing email
+   */
+  async sendOrderItemProcessingEmail(
+    to: string,
+    data: {
+      customerName: string;
+      orderNumber: string;
+      productName: string;
+      vendorName: string;
+      orderLink: string;
+    }
+  ) {
+    try {
+      const { data: result, error } = await resend.emails.send({
+        from: EMAIL_FROM,
+        to,
+        subject: `${APP_NAME} - Order Item Being Processed`,
+        html: `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Order Item Processing</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f4f4f5;">
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+    <tr>
+      <td align="center" style="padding: 40px 20px;">
+        <table role="presentation" width="600" cellspacing="0" cellpadding="0" border="0" style="background-color: #ffffff; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+          <!-- Header -->
+          <tr>
+            <td style="padding: 40px 40px 20px; text-align: center; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 8px 8px 0 0;">
+              <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: 700;">${APP_NAME}</h1>
+            </td>
+          </tr>
+
+          <!-- Content -->
+          <tr>
+            <td style="padding: 40px;">
+              <h2 style="margin: 0 0 20px; color: #18181b; font-size: 24px; font-weight: 600;">Order Item Being Processed</h2>
+              <p style="margin: 0 0 20px; color: #52525b; font-size: 16px; line-height: 1.5;">Hi ${data.customerName},</p>
+              <p style="margin: 0 0 30px; color: #52525b; font-size: 16px; line-height: 1.5;">Good news! Your order item is now being prepared for shipment.</p>
+
+              <!-- Order Info Box -->
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+                <tr>
+                  <td style="padding: 20px; background-color: #eff6ff; border-left: 4px solid #3b82f6; border-radius: 8px;">
+                    <p style="margin: 0 0 8px; color: #1e40af; font-size: 14px;"><strong>Order Number:</strong> ${data.orderNumber}</p>
+                    <p style="margin: 0 0 8px; color: #1e40af; font-size: 14px;"><strong>Product:</strong> ${data.productName}</p>
+                    <p style="margin: 0; color: #1e40af; font-size: 14px;"><strong>Vendor:</strong> ${data.vendorName}</p>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- CTA Button -->
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+                <tr>
+                  <td align="center" style="padding: 30px 0 20px;">
+                    <a href="${process.env.NEXT_PUBLIC_APP_URL}${data.orderLink}" style="display: inline-block; padding: 14px 32px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: #ffffff; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 16px;">View Order</a>
+                  </td>
+                </tr>
+              </table>
+
+              <p style="margin: 0; color: #71717a; font-size: 14px; line-height: 1.5;">You'll receive a shipping notification once the item is dispatched.</p>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="padding: 20px 40px 40px; text-align: center; color: #a1a1aa; font-size: 12px; border-top: 1px solid #e4e4e7;">
+              <p style="margin: 0;">© ${new Date().getFullYear()} ${APP_NAME}. All rights reserved.</p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+        `,
+      });
+
+      if (error) {
+        console.error("Failed to send order item processing email:", error);
+        return { success: false, error };
+      }
+
+      return { success: true, data: result };
+    } catch (error) {
+      console.error("Error sending order item processing email:", error);
+      return { success: false, error };
+    }
+  },
+
+  /**
+   * Send order delivery confirmed email
+   */
+  async sendOrderDeliveryConfirmedEmail(
+    to: string,
+    data: {
+      customerName: string;
+      orderNumber: string;
+      orderLink: string;
+    }
+  ) {
+    try {
+      const { data: result, error } = await resend.emails.send({
+        from: EMAIL_FROM,
+        to,
+        subject: `${APP_NAME} - Thank You for Confirming Delivery`,
+        html: `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Delivery Confirmed</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f4f4f5;">
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+    <tr>
+      <td align="center" style="padding: 40px 20px;">
+        <table role="presentation" width="600" cellspacing="0" cellpadding="0" border="0" style="background-color: #ffffff; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+          <!-- Header -->
+          <tr>
+            <td style="padding: 40px 40px 20px; text-align: center; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 8px 8px 0 0;">
+              <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: 700;">${APP_NAME}</h1>
+            </td>
+          </tr>
+
+          <!-- Content -->
+          <tr>
+            <td style="padding: 40px;">
+              <h2 style="margin: 0 0 20px; color: #18181b; font-size: 24px; font-weight: 600;">✓ Delivery Confirmed</h2>
+              <p style="margin: 0 0 20px; color: #52525b; font-size: 16px; line-height: 1.5;">Hi ${data.customerName},</p>
+              <p style="margin: 0 0 30px; color: #52525b; font-size: 16px; line-height: 1.5;">Thank you for confirming the delivery of your order <strong>${data.orderNumber}</strong>. We hope you're satisfied with your purchase!</p>
+
+              <!-- Success Box -->
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+                <tr>
+                  <td style="padding: 20px; background-color: #f0fdf4; border-left: 4px solid #22c55e; border-radius: 8px;">
+                    <p style="margin: 0; color: #166534; font-size: 14px;">Funds have been released to the vendor. Your order is now complete.</p>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- CTA Button -->
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+                <tr>
+                  <td align="center" style="padding: 30px 0 20px;">
+                    <a href="${process.env.NEXT_PUBLIC_APP_URL}${data.orderLink}" style="display: inline-block; padding: 14px 32px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: #ffffff; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 16px;">Leave a Review</a>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- Return Info -->
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+                <tr>
+                  <td style="padding: 20px; background-color: #fef9ec; border-left: 4px solid #f59e0b; border-radius: 8px;">
+                    <p style="margin: 0; color: #92400e; font-size: 14px;"><strong>Return Policy:</strong> You can request a return within 24 hours if there's an issue with your order.</p>
+                  </td>
+                </tr>
+              </table>
+
+              <p style="margin: 30px 0 0; color: #71717a; font-size: 14px; line-height: 1.5;">We appreciate your business and look forward to serving you again!</p>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="padding: 20px 40px 40px; text-align: center; color: #a1a1aa; font-size: 12px; border-top: 1px solid #e4e4e7;">
+              <p style="margin: 0;">© ${new Date().getFullYear()} ${APP_NAME}. All rights reserved.</p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+        `,
+      });
+
+      if (error) {
+        console.error("Failed to send order delivery confirmed email:", error);
+        return { success: false, error };
+      }
+
+      return { success: true, data: result };
+    } catch (error) {
+      console.error("Error sending order delivery confirmed email:", error);
+      return { success: false, error };
+    }
+  },
+
+  /**
+   * Send order return requested email
+   */
+  async sendOrderReturnRequestedEmail(
+    to: string,
+    data: {
+      recipientName: string;
+      orderNumber: string;
+      reason: string;
+      orderLink: string;
+      isVendor?: boolean;
+    }
+  ) {
+    try {
+      const { data: result, error } = await resend.emails.send({
+        from: EMAIL_FROM,
+        to,
+        subject: `${APP_NAME} - Return Request ${data.isVendor ? "Received" : "Submitted"}`,
+        html: `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Return Request ${data.isVendor ? "Received" : "Submitted"}</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f4f4f5;">
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+    <tr>
+      <td align="center" style="padding: 40px 20px;">
+        <table role="presentation" width="600" cellspacing="0" cellpadding="0" border="0" style="background-color: #ffffff; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+          <!-- Header -->
+          <tr>
+            <td style="padding: 40px 40px 20px; text-align: center; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 8px 8px 0 0;">
+              <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: 700;">${APP_NAME}</h1>
+            </td>
+          </tr>
+
+          <!-- Content -->
+          <tr>
+            <td style="padding: 40px;">
+              <h2 style="margin: 0 0 20px; color: #18181b; font-size: 24px; font-weight: 600;">Return Request ${data.isVendor ? "Received" : "Submitted"}</h2>
+              <p style="margin: 0 0 20px; color: #52525b; font-size: 16px; line-height: 1.5;">Hi ${data.recipientName},</p>
+              <p style="margin: 0 0 30px; color: #52525b; font-size: 16px; line-height: 1.5;">
+                ${
+                  data.isVendor
+                    ? "A customer has requested a return for an order."
+                    : "Your return request has been submitted successfully."
+                }
+              </p>
+
+              <!-- Return Info Box -->
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+                <tr>
+                  <td style="padding: 20px; background-color: #fef9ec; border-left: 4px solid #f59e0b; border-radius: 8px;">
+                    <p style="margin: 0 0 8px; color: #92400e; font-size: 14px;"><strong>Order Number:</strong> ${data.orderNumber}</p>
+                    <p style="margin: 0; color: #92400e; font-size: 14px;"><strong>Reason:</strong> ${data.reason}</p>
+                  </td>
+                </tr>
+              </table>
+
+              ${
+                data.isVendor
+                  ? `
+              <!-- Vendor Instructions -->
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+                <tr>
+                  <td style="padding: 20px; background-color: #eff6ff; border-left: 4px solid #3b82f6; border-radius: 8px; margin-top: 20px;">
+                    <p style="margin: 0; color: #1e40af; font-size: 14px;">Please review the return request and coordinate with the customer regarding return shipping arrangements.</p>
+                  </td>
+                </tr>
+              </table>
+              `
+                  : `
+              <!-- Customer Instructions -->
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+                <tr>
+                  <td style="padding: 20px; background-color: #eff6ff; border-left: 4px solid #3b82f6; border-radius: 8px; margin-top: 20px;">
+                    <p style="margin: 0; color: #1e40af; font-size: 14px;"><strong>Note:</strong> Return shipping costs are to be paid by the customer. The vendor will contact you with return instructions.</p>
+                  </td>
+                </tr>
+              </table>
+              `
+              }
+
+              <!-- CTA Button -->
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+                <tr>
+                  <td align="center" style="padding: 30px 0 20px;">
+                    <a href="${process.env.NEXT_PUBLIC_APP_URL}${data.orderLink}" style="display: inline-block; padding: 14px 32px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: #ffffff; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 16px;">View Details</a>
+                  </td>
+                </tr>
+              </table>
+
+              <p style="margin: 0; color: #71717a; font-size: 14px; line-height: 1.5;">If you have any questions, please contact our support team.</p>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="padding: 20px 40px 40px; text-align: center; color: #a1a1aa; font-size: 12px; border-top: 1px solid #e4e4e7;">
+              <p style="margin: 0;">© ${new Date().getFullYear()} ${APP_NAME}. All rights reserved.</p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+        `,
+      });
+
+      if (error) {
+        console.error("Failed to send order return requested email:", error);
+        return { success: false, error };
+      }
+
+      return { success: true, data: result };
+    } catch (error) {
+      console.error("Error sending order return requested email:", error);
+      return { success: false, error };
+    }
+  },
+
+  /**
+   * Send dispute created email
+   */
+  async sendDisputeCreatedEmail(
+    to: string,
+    data: {
+      recipientName: string;
+      orderNumber: string;
+      reason: string;
+      disputeLink: string;
+      isAdmin?: boolean;
+    }
+  ) {
+    try {
+      const { data: result, error } = await resend.emails.send({
+        from: EMAIL_FROM,
+        to,
+        subject: `${APP_NAME} - ${data.isAdmin ? "New Dispute Filed" : "Dispute Submitted"} for Order ${data.orderNumber}`,
+        html: `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dispute ${data.isAdmin ? "Filed" : "Submitted"}</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f4f4f5;">
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+    <tr>
+      <td align="center" style="padding: 40px 20px;">
+        <table role="presentation" width="600" cellspacing="0" cellpadding="0" border="0" style="background-color: #ffffff; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+          <!-- Header -->
+          <tr>
+            <td style="padding: 40px 40px 20px; text-align: center; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 8px 8px 0 0;">
+              <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: 700;">${APP_NAME}</h1>
+            </td>
+          </tr>
+
+          <!-- Content -->
+          <tr>
+            <td style="padding: 40px;">
+              <h2 style="margin: 0 0 20px; color: #18181b; font-size: 24px; font-weight: 600;">${data.isAdmin ? "⚠️ New Dispute Filed" : "Dispute Submitted"}</h2>
+              <p style="margin: 0 0 20px; color: #52525b; font-size: 16px; line-height: 1.5;">Hi ${data.recipientName},</p>
+              <p style="margin: 0 0 30px; color: #52525b; font-size: 16px; line-height: 1.5;">${
+                data.isAdmin
+                  ? `A dispute has been filed for Order ${data.orderNumber}. Immediate review required.`
+                  : `Your dispute for Order ${data.orderNumber} has been submitted and is under review.`
+              }</p>
+
+              <!-- Dispute Info Box -->
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+                <tr>
+                  <td style="padding: 20px; background-color: #fef2f2; border-left: 4px solid #ef4444; border-radius: 8px;">
+                    <p style="margin: 0 0 8px; color: #991b1b; font-size: 14px;"><strong>Order Number:</strong> ${data.orderNumber}</p>
+                    <p style="margin: 0; color: #991b1b; font-size: 14px;"><strong>Reason:</strong> ${data.reason}</p>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- CTA Button -->
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+                <tr>
+                  <td align="center" style="padding: 30px 0 20px;">
+                    <a href="${process.env.NEXT_PUBLIC_APP_URL}${data.disputeLink}" style="display: inline-block; padding: 14px 32px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: #ffffff; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 16px;">View Dispute</a>
+                  </td>
+                </tr>
+              </table>
+
+              <p style="margin: 0; color: #71717a; font-size: 14px; line-height: 1.5;">${
+                data.isAdmin
+                  ? "Please review this dispute at your earliest convenience."
+                  : "We'll review your dispute and get back to you soon."
+              }</p>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="padding: 20px 40px 40px; text-align: center; color: #a1a1aa; font-size: 12px; border-top: 1px solid #e4e4e7;">
+              <p style="margin: 0;">© ${new Date().getFullYear()} ${APP_NAME}. All rights reserved.</p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+        `,
+      });
+
+      if (error) {
+        console.error("Failed to send dispute created email:", error);
+        return { success: false, error };
+      }
+
+      return { success: true, data: result };
+    } catch (error) {
+      console.error("Error sending dispute created email:", error);
+      return { success: false, error };
+    }
+  },
+
+  /**
+   * Send dispute resolved email
+   */
+  async sendDisputeResolvedEmail(
+    to: string,
+    data: {
+      recipientName: string;
+      orderNumber: string;
+      resolutionType: string;
+      refundAmount?: number;
+      disputeLink: string;
+    }
+  ) {
+    try {
+      const { data: result, error } = await resend.emails.send({
+        from: EMAIL_FROM,
+        to,
+        subject: `${APP_NAME} - Dispute Resolved for Order ${data.orderNumber}`,
+        html: `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dispute Resolved</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f4f4f5;">
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+    <tr>
+      <td align="center" style="padding: 40px 20px;">
+        <table role="presentation" width="600" cellspacing="0" cellpadding="0" border="0" style="background-color: #ffffff; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+          <!-- Header -->
+          <tr>
+            <td style="padding: 40px 40px 20px; text-align: center; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 8px 8px 0 0;">
+              <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: 700;">${APP_NAME}</h1>
+            </td>
+          </tr>
+
+          <!-- Content -->
+          <tr>
+            <td style="padding: 40px;">
+              <h2 style="margin: 0 0 20px; color: #18181b; font-size: 24px; font-weight: 600;">Dispute Resolved</h2>
+              <p style="margin: 0 0 20px; color: #52525b; font-size: 16px; line-height: 1.5;">Hi ${data.recipientName},</p>
+              <p style="margin: 0 0 30px; color: #52525b; font-size: 16px; line-height: 1.5;">Your dispute for Order ${data.orderNumber} has been resolved.</p>
+
+              <!-- Resolution Info Box -->
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+                <tr>
+                  <td style="padding: 20px; background-color: ${
+                    data.refundAmount ? "#f0fdf4" : "#eff6ff"
+                  }; border-left: 4px solid ${
+          data.refundAmount ? "#22c55e" : "#3b82f6"
+        }; border-radius: 8px;">
+                    <p style="margin: 0 0 8px; color: ${
+                      data.refundAmount ? "#166534" : "#1e40af"
+                    }; font-size: 14px;"><strong>Resolution:</strong> ${data.resolutionType}</p>
+                    ${
+                      data.refundAmount
+                        ? `<p style="margin: 0; color: #166534; font-size: 14px;"><strong>Refund Amount:</strong> Rs. ${data.refundAmount.toFixed(2)} credited to your wallet</p>`
+                        : ""
+                    }
+                  </td>
+                </tr>
+              </table>
+
+              <!-- CTA Button -->
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+                <tr>
+                  <td align="center" style="padding: 30px 0 20px;">
+                    <a href="${process.env.NEXT_PUBLIC_APP_URL}${data.disputeLink}" style="display: inline-block; padding: 14px 32px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: #ffffff; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 16px;">View Details</a>
+                  </td>
+                </tr>
+              </table>
+
+              <p style="margin: 0; color: #71717a; font-size: 14px; line-height: 1.5;">Thank you for your patience while we reviewed this matter.</p>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="padding: 20px 40px 40px; text-align: center; color: #a1a1aa; font-size: 12px; border-top: 1px solid #e4e4e7;">
+              <p style="margin: 0;">© ${new Date().getFullYear()} ${APP_NAME}. All rights reserved.</p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+        `,
+      });
+
+      if (error) {
+        console.error("Failed to send dispute resolved email:", error);
+        return { success: false, error };
+      }
+
+      return { success: true, data: result };
+    } catch (error) {
+      console.error("Error sending dispute resolved email:", error);
+      return { success: false, error };
+    }
+  },
+
+  /**
+   * Send payout approved email
+   */
+  async sendPayoutApprovedEmail(
+    to: string,
+    data: {
+      vendorName: string;
+      amount: number;
+      bankName: string;
+    }
+  ) {
+    try {
+      const { data: result, error } = await resend.emails.send({
+        from: EMAIL_FROM,
+        to,
+        subject: `${APP_NAME} - Payout Approved`,
+        html: `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Payout Approved</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f4f4f5;">
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+    <tr>
+      <td align="center" style="padding: 40px 20px;">
+        <table role="presentation" width="600" cellspacing="0" cellpadding="0" border="0" style="background-color: #ffffff; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+          <!-- Header -->
+          <tr>
+            <td style="padding: 40px 40px 20px; text-align: center; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 8px 8px 0 0;">
+              <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: 700;">${APP_NAME}</h1>
+            </td>
+          </tr>
+
+          <!-- Content -->
+          <tr>
+            <td style="padding: 40px;">
+              <h2 style="margin: 0 0 20px; color: #18181b; font-size: 24px; font-weight: 600;">✓ Payout Approved</h2>
+              <p style="margin: 0 0 20px; color: #52525b; font-size: 16px; line-height: 1.5;">Hi ${data.vendorName},</p>
+              <p style="margin: 0 0 30px; color: #52525b; font-size: 16px; line-height: 1.5;">Great news! Your payout request has been approved and is being processed.</p>
+
+              <!-- Payout Info Box -->
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+                <tr>
+                  <td style="padding: 20px; background-color: #f0fdf4; border-left: 4px solid #22c55e; border-radius: 8px;">
+                    <p style="margin: 0 0 8px; color: #166534; font-size: 14px;"><strong>Amount:</strong> Rs. ${data.amount.toFixed(2)}</p>
+                    <p style="margin: 0; color: #166534; font-size: 14px;"><strong>Bank:</strong> ${data.bankName}</p>
+                  </td>
+                </tr>
+              </table>
+
+              <p style="margin: 30px 0 0; color: #71717a; font-size: 14px; line-height: 1.5;">Funds will be transferred shortly. You'll receive a confirmation once the transfer is complete.</p>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="padding: 20px 40px 40px; text-align: center; color: #a1a1aa; font-size: 12px; border-top: 1px solid #e4e4e7;">
+              <p style="margin: 0;">© ${new Date().getFullYear()} ${APP_NAME}. All rights reserved.</p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+        `,
+      });
+
+      if (error) {
+        console.error("Failed to send payout approved email:", error);
+        return { success: false, error };
+      }
+
+      return { success: true, data: result };
+    } catch (error) {
+      console.error("Error sending payout approved email:", error);
+      return { success: false, error };
+    }
+  },
+
+  /**
+   * Send payout completed email
+   */
+  async sendPayoutCompletedEmail(
+    to: string,
+    data: {
+      vendorName: string;
+      amount: number;
+      transactionRef: string;
+      bankName: string;
+    }
+  ) {
+    try {
+      const { data: result, error } = await resend.emails.send({
+        from: EMAIL_FROM,
+        to,
+        subject: `${APP_NAME} - Payout Completed`,
+        html: `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Payout Completed</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f4f4f5;">
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+    <tr>
+      <td align="center" style="padding: 40px 20px;">
+        <table role="presentation" width="600" cellspacing="0" cellpadding="0" border="0" style="background-color: #ffffff; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+          <!-- Header -->
+          <tr>
+            <td style="padding: 40px 40px 20px; text-align: center; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 8px 8px 0 0;">
+              <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: 700;">${APP_NAME}</h1>
+            </td>
+          </tr>
+
+          <!-- Content -->
+          <tr>
+            <td style="padding: 40px;">
+              <h2 style="margin: 0 0 20px; color: #18181b; font-size: 24px; font-weight: 600;">🎉 Payout Completed</h2>
+              <p style="margin: 0 0 20px; color: #52525b; font-size: 16px; line-height: 1.5;">Hi ${data.vendorName},</p>
+              <p style="margin: 0 0 30px; color: #52525b; font-size: 16px; line-height: 1.5;">Your payout has been successfully transferred!</p>
+
+              <!-- Payout Info Box -->
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+                <tr>
+                  <td style="padding: 20px; background-color: #f0fdf4; border-left: 4px solid #22c55e; border-radius: 8px;">
+                    <p style="margin: 0 0 8px; color: #166534; font-size: 14px;"><strong>Amount:</strong> Rs. ${data.amount.toFixed(2)}</p>
+                    <p style="margin: 0 0 8px; color: #166534; font-size: 14px;"><strong>Bank:</strong> ${data.bankName}</p>
+                    <p style="margin: 0; color: #166534; font-size: 14px;"><strong>Reference:</strong> ${data.transactionRef}</p>
+                  </td>
+                </tr>
+              </table>
+
+              <p style="margin: 30px 0 0; color: #71717a; font-size: 14px; line-height: 1.5;">Please allow 1-2 business days for the funds to appear in your account.</p>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="padding: 20px 40px 40px; text-align: center; color: #a1a1aa; font-size: 12px; border-top: 1px solid #e4e4e7;">
+              <p style="margin: 0;">© ${new Date().getFullYear()} ${APP_NAME}. All rights reserved.</p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+        `,
+      });
+
+      if (error) {
+        console.error("Failed to send payout completed email:", error);
+        return { success: false, error };
+      }
+
+      return { success: true, data: result };
+    } catch (error) {
+      console.error("Error sending payout completed email:", error);
+      return { success: false, error };
+    }
+  },
+
+  /**
+   * Send payout failed email
+   */
+  async sendPayoutFailedEmail(
+    to: string,
+    data: {
+      vendorName: string;
+      amount: number;
+      failureReason: string;
+    }
+  ) {
+    try {
+      const { data: result, error } = await resend.emails.send({
+        from: EMAIL_FROM,
+        to,
+        subject: `${APP_NAME} - Payout Failed`,
+        html: `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Payout Failed</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f4f4f5;">
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+    <tr>
+      <td align="center" style="padding: 40px 20px;">
+        <table role="presentation" width="600" cellspacing="0" cellpadding="0" border="0" style="background-color: #ffffff; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+          <!-- Header -->
+          <tr>
+            <td style="padding: 40px 40px 20px; text-align: center; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 8px 8px 0 0;">
+              <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: 700;">${APP_NAME}</h1>
+            </td>
+          </tr>
+
+          <!-- Content -->
+          <tr>
+            <td style="padding: 40px;">
+              <h2 style="margin: 0 0 20px; color: #18181b; font-size: 24px; font-weight: 600;">Payout Failed</h2>
+              <p style="margin: 0 0 20px; color: #52525b; font-size: 16px; line-height: 1.5;">Hi ${data.vendorName},</p>
+              <p style="margin: 0 0 30px; color: #52525b; font-size: 16px; line-height: 1.5;">Unfortunately, your payout request could not be processed.</p>
+
+              <!-- Failure Info Box -->
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+                <tr>
+                  <td style="padding: 20px; background-color: #fef2f2; border-left: 4px solid #ef4444; border-radius: 8px;">
+                    <p style="margin: 0 0 8px; color: #991b1b; font-size: 14px;"><strong>Amount:</strong> Rs. ${data.amount.toFixed(2)}</p>
+                    <p style="margin: 0; color: #991b1b; font-size: 14px;"><strong>Reason:</strong> ${data.failureReason}</p>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- Refund Info -->
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+                <tr>
+                  <td style="padding: 20px; background-color: #eff6ff; border-left: 4px solid #3b82f6; border-radius: 8px; margin-top: 20px;">
+                    <p style="margin: 0; color: #1e40af; font-size: 14px;">The amount has been returned to your available balance. You can try requesting a payout again or contact support for assistance.</p>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="padding: 20px 40px 40px; text-align: center; color: #a1a1aa; font-size: 12px; border-top: 1px solid #e4e4e7;">
+              <p style="margin: 0;">© ${new Date().getFullYear()} ${APP_NAME}. All rights reserved.</p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+        `,
+      });
+
+      if (error) {
+        console.error("Failed to send payout failed email:", error);
+        return { success: false, error };
+      }
+
+      return { success: true, data: result };
+    } catch (error) {
+      console.error("Error sending payout failed email:", error);
+      return { success: false, error };
+    }
+  },
 };

@@ -35,7 +35,7 @@ function CustomerLoginContent() {
             </p>
             <ol className="text-xs text-gray-600 space-y-1 list-decimal list-inside">
               <li>Enter your email address</li>
-              <li>We'll send you a 6-digit code</li>
+              <li>We&apos;ll send you a 6-digit code</li>
               <li>Enter the code to sign in</li>
             </ol>
             <p className="text-xs text-gray-500 mt-2">

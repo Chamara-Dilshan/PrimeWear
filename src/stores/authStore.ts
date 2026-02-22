@@ -16,12 +16,14 @@ interface AuthState {
   accessToken: string | null;
   refreshToken: string | null;
   isAuthenticated: boolean;
+  _hasHydrated: boolean;
 
   // Actions
   setAuth: (user: User, accessToken: string, refreshToken: string) => void;
   setUser: (user: User) => void;
   updateTokens: (accessToken: string, refreshToken: string) => void;
   logout: () => void;
+  setHasHydrated: (value: boolean) => void;
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -31,6 +33,7 @@ export const useAuthStore = create<AuthState>()(
       accessToken: null,
       refreshToken: null,
       isAuthenticated: false,
+      _hasHydrated: false,
 
       setAuth: (user, accessToken, refreshToken) =>
         set({
@@ -53,13 +56,27 @@ export const useAuthStore = create<AuthState>()(
           refreshToken,
         })),
 
-      logout: () =>
+      logout: async () => {
+        try {
+          // Call logout API to clear cookies
+          await fetch("/api/auth/logout", {
+            method: "POST",
+          });
+        } catch (error) {
+          console.error("Logout API error:", error);
+          // Continue with logout even if API call fails
+        }
+
+        // Clear local state
         set({
           user: null,
           accessToken: null,
           refreshToken: null,
           isAuthenticated: false,
-        }),
+        });
+      },
+
+      setHasHydrated: (value) => set({ _hasHydrated: value }),
     }),
     {
       name: "auth-storage", // localStorage key
@@ -69,6 +86,9 @@ export const useAuthStore = create<AuthState>()(
         refreshToken: state.refreshToken,
         isAuthenticated: state.isAuthenticated,
       }),
+      onRehydrateStorage: () => (state) => {
+        state?.setHasHydrated(true);
+      },
     }
   )
 );

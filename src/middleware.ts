@@ -9,7 +9,12 @@ const protectedRoutes = {
   "/orders": [UserRole.CUSTOMER, UserRole.ADMIN, UserRole.VENDOR],
   "/cart": [UserRole.CUSTOMER],
   "/checkout": [UserRole.CUSTOMER],
+  "/payment": [UserRole.CUSTOMER],
   "/profile": [UserRole.CUSTOMER, UserRole.ADMIN, UserRole.VENDOR],
+  "/notifications": [UserRole.CUSTOMER, UserRole.ADMIN, UserRole.VENDOR],
+  "/api/notifications": [UserRole.CUSTOMER, UserRole.ADMIN, UserRole.VENDOR],
+  "/api/admin": [UserRole.ADMIN],
+  "/api/vendor": [UserRole.VENDOR],
 };
 
 // Public routes that don't require authentication
@@ -22,7 +27,10 @@ const publicRoutes = [
   "/categories",
   "/vendors",
   "/api/auth/login",
+  "/api/auth/logout",
+  "/api/auth/refresh",
   "/api/auth/otp",
+  "/api/payments/webhook", // PayHere webhook must be public
 ];
 
 export function middleware(request: NextRequest) {
@@ -103,7 +111,7 @@ export function middleware(request: NextRequest) {
   }
 
   // Check if user has required role
-  const requiredRoles = protectedRoutes[protectedRoute as keyof typeof protectedRoutes];
+  const requiredRoles = protectedRoutes[protectedRoute as keyof typeof protectedRoutes] as UserRole[];
   if (!requiredRoles.includes(payload.role)) {
     // User doesn't have required role, return 403
     const url = request.nextUrl.clone();

@@ -1,12 +1,12 @@
 import bcrypt from "bcryptjs";
-import jwt from "jsonwebtoken";
+import jwt, { SignOptions } from "jsonwebtoken";
 import { UserRole } from "@prisma/client";
 
 // Environment variables validation
-const JWT_SECRET = process.env.JWT_SECRET;
-const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET;
-const JWT_ACCESS_EXPIRY = process.env.JWT_ACCESS_EXPIRY || "15m";
-const JWT_REFRESH_EXPIRY = process.env.JWT_REFRESH_EXPIRY || "7d";
+const JWT_SECRET: string = process.env.JWT_SECRET || "";
+const JWT_REFRESH_SECRET: string = process.env.JWT_REFRESH_SECRET || "";
+const JWT_ACCESS_EXPIRY: string = process.env.JWT_ACCESS_EXPIRY || "15m";
+const JWT_REFRESH_EXPIRY: string = process.env.JWT_REFRESH_EXPIRY || "7d";
 
 if (!JWT_SECRET || !JWT_REFRESH_SECRET) {
   throw new Error("JWT secrets are not configured");
@@ -76,18 +76,18 @@ export const tokenUtils = {
    * Generate access token (short-lived)
    */
   generateAccessToken(payload: TokenPayload): string {
-    return jwt.sign(payload, JWT_SECRET!, {
+    return jwt.sign(payload, JWT_SECRET, {
       expiresIn: JWT_ACCESS_EXPIRY,
-    });
+    } as SignOptions);
   },
 
   /**
    * Generate refresh token (long-lived)
    */
   generateRefreshToken(payload: TokenPayload): string {
-    return jwt.sign(payload, JWT_REFRESH_SECRET!, {
+    return jwt.sign(payload, JWT_REFRESH_SECRET, {
       expiresIn: JWT_REFRESH_EXPIRY,
-    });
+    } as SignOptions);
   },
 
   /**

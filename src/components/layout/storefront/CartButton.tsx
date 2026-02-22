@@ -1,0 +1,46 @@
+"use client";
+
+import { useState, useEffect } from "react";
+import { ShoppingCart } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { CartDrawer } from "@/components/cart/CartDrawer";
+import { useCartStore } from "@/stores/cartStore";
+import { useAuthStore } from "@/stores/authStore";
+
+export function CartButton() {
+  const { isAuthenticated } = useAuthStore();
+  const { itemCount, fetchCart } = useCartStore();
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+
+  useEffect(() => {
+    // Fetch cart from API if user is authenticated
+    if (isAuthenticated) {
+      fetchCart();
+    }
+  }, [isAuthenticated, fetchCart]);
+
+  return (
+    <>
+      <Button
+        variant="ghost"
+        size="icon"
+        className="relative"
+        onClick={() => setIsDrawerOpen(true)}
+        aria-label={`Shopping cart with ${itemCount} items`}
+      >
+        <ShoppingCart className="h-5 w-5" />
+        {itemCount > 0 && (
+          <Badge
+            variant="destructive"
+            className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs"
+          >
+            {itemCount}
+          </Badge>
+        )}
+      </Button>
+
+      <CartDrawer open={isDrawerOpen} onOpenChange={setIsDrawerOpen} />
+    </>
+  );
+}

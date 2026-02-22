@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuthStore } from "@/stores/authStore";
+import { useCartStore } from "@/stores/cartStore";
 import { toast } from "sonner";
 import { Loader2, Mail } from "lucide-react";
 
@@ -30,6 +31,7 @@ interface OTPFormProps {
 export function OTPForm({ redirectUrl }: OTPFormProps) {
   const router = useRouter();
   const { setAuth } = useAuthStore();
+  const { mergeGuestCart, itemCount } = useCartStore();
   const [step, setStep] = useState<"email" | "otp">("email");
   const [email, setEmail] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -113,6 +115,19 @@ export function OTPForm({ redirectUrl }: OTPFormProps) {
 
       toast.success("Login successful!");
 
+      // Merge guest cart if there are items
+      if (itemCount > 0) {
+        try {
+          await mergeGuestCart();
+          if (itemCount > 1) {
+            toast.success(`${itemCount} items merged into your cart`);
+          }
+        } catch (error) {
+          console.error("Failed to merge cart:", error);
+          // Don't show error to user, cart will still work
+        }
+      }
+
       // Redirect
       if (redirectUrl) {
         router.push(redirectUrl);
@@ -163,7 +178,7 @@ export function OTPForm({ redirectUrl }: OTPFormProps) {
             </p>
           )}
           <p className="text-sm text-gray-500">
-            We'll send you a 6-digit code to verify your email
+            We&apos;ll send you a 6-digit code to verify your email
           </p>
         </div>
 

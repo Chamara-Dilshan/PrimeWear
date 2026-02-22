@@ -20,7 +20,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         {
           success: false,
-          error: validation.error.errors[0].message,
+          error: validation.error.issues[0].message,
         },
         { status: 400 }
       );
@@ -116,8 +116,8 @@ export async function POST(request: NextRequest) {
       role: user.role,
     });
 
-    // Return user data and tokens
-    return NextResponse.json({
+    // Create response with user data and tokens
+    const response = NextResponse.json({
       success: true,
       data: {
         user: {
@@ -132,6 +132,27 @@ export async function POST(request: NextRequest) {
         refreshToken: tokens.refreshToken,
       },
     });
+
+    // Set cookies for middleware authentication
+    // accessToken - httpOnly for security, 1 hour expiry
+    response.cookies.set("accessToken", tokens.accessToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      maxAge: 60 * 60, // 1 hour (matches JWT_ACCESS_EXPIRY)
+      path: "/",
+    });
+
+    // refreshToken - httpOnly for security, 7 days expiry
+    response.cookies.set("refreshToken", tokens.refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      maxAge: 7 * 24 * 60 * 60, // 7 days (matches JWT_REFRESH_EXPIRY)
+      path: "/",
+    });
+
+    return response;
   } catch (error) {
     console.error("Login error:", error);
     return NextResponse.json(

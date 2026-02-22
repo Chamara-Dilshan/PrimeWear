@@ -31,7 +31,7 @@ function VendorLoginContent() {
           {/* First Login Notice */}
           <div className="mt-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
             <p className="text-sm text-blue-800">
-              <strong>First time logging in?</strong> You'll be asked to change
+              <strong>First time logging in?</strong> You&apos;ll be asked to change
               your temporary password for security.
             </p>
           </div>
