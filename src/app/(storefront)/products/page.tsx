@@ -33,12 +33,19 @@ interface Category {
   slug: string;
 }
 
+interface Vendor {
+  id: string;
+  businessName: string;
+  slug: string;
+}
+
 function ProductsPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [vendors, setVendors] = useState<Vendor[]>([]);
   const [loading, setLoading] = useState(true);
   const [pagination, setPagination] = useState({
     page: 1,
@@ -55,17 +62,23 @@ function ProductsPageContent() {
   const maxPrice = searchParams.get("maxPrice") || "";
   const sortBy = searchParams.get("sortBy") || "createdAt";
   const inStock = searchParams.get("inStock") === "true";
+  const vendorId = searchParams.get("vendorId") || "";
 
-  // Fetch categories
+  // Fetch categories and vendors
   useEffect(() => {
-    const fetchCategories = async () => {
+    const fetchFiltersData = async () => {
       try {
-        const response = await fetch("/api/categories");
-        const data = await response.json();
-        if (data.success) {
+        const [categoriesRes, vendorsRes] = await Promise.all([
+          fetch("/api/categories"),
+          fetch("/api/vendors"),
+        ]);
+        const categoriesData = await categoriesRes.json();
+        const vendorsData = await vendorsRes.json();
+
+        if (categoriesData.success && Array.isArray(categoriesData.data?.categories)) {
           // Flatten parent and children categories
           const allCategories: Category[] = [];
-          data.data.forEach((cat: any) => {
+          categoriesData.data.categories.forEach((cat: any) => {
             allCategories.push({
               id: cat.id,
               name: cat.name,
@@ -83,11 +96,21 @@ function ProductsPageContent() {
           });
           setCategories(allCategories);
         }
+
+        if (vendorsData.success && Array.isArray(vendorsData.data)) {
+          setVendors(
+            vendorsData.data.map((v: any) => ({
+              id: v.id,
+              businessName: v.businessName,
+              slug: v.slug,
+            }))
+          );
+        }
       } catch (error) {
-        console.error("Error fetching categories:", error);
+        console.error("Error fetching filter data:", error);
       }
     };
-    fetchCategories();
+    fetchFiltersData();
   }, []);
 
   // Fetch products
@@ -104,6 +127,7 @@ function ProductsPageContent() {
           ...(maxPrice && { maxPrice }),
           ...(sortBy && { sortBy }),
           ...(inStock && { inStock: "true" }),
+          ...(vendorId && { vendorId }),
         });
 
         const response = await fetch(`/api/products?${params}`);
@@ -121,7 +145,7 @@ function ProductsPageContent() {
     };
 
     fetchProducts();
-  }, [page, search, categoryId, minPrice, maxPrice, sortBy, inStock]);
+  }, [page, search, categoryId, minPrice, maxPrice, sortBy, inStock, vendorId]);
 
   const updateURL = (newParams: Record<string, string>) => {
     const params = new URLSearchParams(searchParams.toString());
@@ -153,6 +177,7 @@ function ProductsPageContent() {
       maxPrice: filters.maxPrice || "",
       sortBy: filters.sortBy || "",
       inStock: filters.inStock ? "true" : "",
+      vendorId: filters.vendorId || "",
     });
   };
 
@@ -187,6 +212,7 @@ function ProductsPageContent() {
         </div>
         <ProductFilters
           categories={categories}
+          vendors={vendors}
           onFilterChange={handleFilterChange}
           initialFilters={{
             categoryId,
@@ -194,6 +220,7 @@ function ProductsPageContent() {
             maxPrice,
             sortBy,
             inStock,
+            vendorId,
           }}
         />
       </div>

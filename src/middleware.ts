@@ -26,6 +26,8 @@ const publicRoutes = [
   "/products",
   "/categories",
   "/vendors",
+  "/deals",
+  "/api/deals",
   "/api/auth/login",
   "/api/auth/logout",
   "/api/auth/refresh",
@@ -120,14 +122,15 @@ export function middleware(request: NextRequest) {
   }
 
   // User is authenticated and authorized
-  const response = NextResponse.next();
+  // Pass user info via request headers so API route handlers can read them
+  const requestHeaders = new Headers(request.headers);
+  requestHeaders.set("X-User-Id", payload.userId);
+  requestHeaders.set("X-User-Role", payload.role);
+  requestHeaders.set("X-User-Email", payload.email);
 
-  // Add user info to headers for API routes
-  response.headers.set("X-User-Id", payload.userId);
-  response.headers.set("X-User-Role", payload.role);
-  response.headers.set("X-User-Email", payload.email);
-
-  return response;
+  return NextResponse.next({
+    request: { headers: requestHeaders },
+  });
 }
 
 export const config = {

@@ -55,8 +55,8 @@ export default function CartPage() {
     return (
       <div className="container mx-auto px-4 py-8">
         <Skeleton className="h-10 w-48 mb-8" />
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          <div className="lg:col-span-2 space-y-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-8">
+          <div className="md:col-span-2 space-y-4">
             <Skeleton className="h-32" />
             <Skeleton className="h-32" />
             <Skeleton className="h-32" />
@@ -80,8 +80,8 @@ export default function CartPage() {
   return (
     <div className="container mx-auto px-4 py-8">
       {/* Header */}
-      <div className="flex items-center justify-between mb-8">
-        <h1 className="text-3xl font-bold">Shopping Cart ({itemCount})</h1>
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8">
+        <h1 className="text-2xl md:text-3xl font-bold">Shopping Cart ({itemCount})</h1>
 
         {itemCount > 0 && (
           <AlertDialog>
@@ -111,9 +111,9 @@ export default function CartPage() {
       </div>
 
       {/* Cart Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-8">
         {/* Cart Items */}
-        <div className="lg:col-span-2">
+        <div className="md:col-span-2">
           <div className="bg-white rounded-lg border divide-y">
             {items.map((item) => (
               <div key={item.id} className="p-4">
@@ -135,7 +135,7 @@ export default function CartPage() {
         </div>
 
         {/* Cart Summary */}
-        <div className="lg:col-span-1">
+        <div className="md:col-span-1">
           <div className="sticky top-4">
             <CartSummary showCheckoutButton={true} />
           </div>

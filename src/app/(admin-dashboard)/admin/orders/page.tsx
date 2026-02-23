@@ -78,17 +78,17 @@ export default async function AdminOrdersPage({
   const currentStatus = resolvedSearchParams.status;
 
   return (
-    <div className="p-8">
+    <div className="space-y-6">
       {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2">All Orders</h1>
+      <div>
+        <h1 className="text-2xl md:text-3xl font-bold mb-2">All Orders</h1>
         <p className="text-muted-foreground">
           Manage and monitor all platform orders
         </p>
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-4">
         <div className="border rounded-lg p-4 bg-card">
           <p className="text-sm text-muted-foreground mb-1">Total Orders</p>
           <p className="text-2xl font-bold">{stats.total}</p>
@@ -118,7 +118,7 @@ export default async function AdminOrdersPage({
       </div>
 
       {/* Status Filters */}
-      <div className="flex flex-wrap gap-2 mb-6">
+      <div className="flex flex-wrap gap-2">
         <Link href="/admin/orders">
           <Button variant={!currentStatus ? "default" : "outline"} size="sm">
             All Orders

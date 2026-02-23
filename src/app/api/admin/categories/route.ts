@@ -59,7 +59,7 @@ export async function POST(request: NextRequest) {
     if (data.parentId) {
       const parentDepth = await getCategoryDepth(data.parentId);
 
-      if (parentDepth >= 1) {
+      if (parentDepth >= 2) {
         return NextResponse.json(
           {
             success: false,

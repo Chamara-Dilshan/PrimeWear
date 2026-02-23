@@ -24,6 +24,20 @@ export async function GET(
 
     const { couponId } = params;
 
+    // Get vendor record to resolve vendorId
+    const vendorRecord = await prisma.vendor.findUnique({
+      where: { userId: user.userId },
+    });
+
+    if (!vendorRecord) {
+      return NextResponse.json(
+        { success: false, error: "Vendor not found" },
+        { status: 404 }
+      );
+    }
+
+    const vendorId = vendorRecord.id;
+
     const coupon = await prisma.coupon.findUnique({
       where: {
         id: couponId,
@@ -124,6 +138,20 @@ export async function PATCH(
 
     const { couponId } = params;
 
+    // Get vendor record to resolve vendorId
+    const vendorRecord = await prisma.vendor.findUnique({
+      where: { userId: user.userId },
+    });
+
+    if (!vendorRecord) {
+      return NextResponse.json(
+        { success: false, error: "Vendor not found" },
+        { status: 404 }
+      );
+    }
+
+    const vendorId = vendorRecord.id;
+
     // Check if coupon exists and belongs to vendor
     const existingCoupon = await prisma.coupon.findUnique({
       where: {
@@ -196,6 +224,7 @@ export async function PATCH(
           perUserLimit: data.perUserLimit,
         }),
         ...(data.isActive !== undefined && { isActive: data.isActive }),
+        ...(data.isFeatured !== undefined && { isFeatured: data.isFeatured }),
         ...(data.validFrom && { validFrom: data.validFrom }),
         ...(data.validUntil !== undefined && { validUntil: data.validUntil }),
       },
@@ -232,6 +261,20 @@ export async function DELETE(
     const user = requireVendor(request);
 
     const { couponId } = params;
+
+    // Get vendor record to resolve vendorId
+    const vendorRecord = await prisma.vendor.findUnique({
+      where: { userId: user.userId },
+    });
+
+    if (!vendorRecord) {
+      return NextResponse.json(
+        { success: false, error: "Vendor not found" },
+        { status: 404 }
+      );
+    }
+
+    const vendorId = vendorRecord.id;
 
     // Check if coupon exists and belongs to vendor
     const coupon = await prisma.coupon.findUnique({

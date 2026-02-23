@@ -5,9 +5,12 @@
 
 "use client";
 
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { formatDistanceToNow } from "date-fns";
-import type { Notification } from "@/types/notification";
+import { Check } from "lucide-react";
+import type { Notification } from "@prisma/client";
+import { NotificationType } from "@/types/notification";
 import { NotificationIcon } from "./NotificationIcon";
 import { cn } from "@/lib/utils";
 
@@ -23,27 +26,32 @@ export function NotificationItem({
   onClick,
 }: NotificationItemProps) {
   const router = useRouter();
+  const [isHovered, setIsHovered] = useState(false);
 
   const handleClick = () => {
-    // Mark as read if unread
     if (!notification.isRead && onMarkAsRead) {
       onMarkAsRead(notification.id);
     }
-
-    // Call custom onClick if provided
     if (onClick) {
       onClick();
     }
-
-    // Navigate to link if provided
     if (notification.link) {
       router.push(notification.link);
+    }
+  };
+
+  const handleMarkAsRead = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (onMarkAsRead) {
+      onMarkAsRead(notification.id);
     }
   };
 
   return (
     <div
       onClick={handleClick}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
       className={cn(
         "flex items-start gap-3 p-4 cursor-pointer transition-colors",
         "hover:bg-gray-50 border-b border-gray-100 last:border-0",
@@ -52,7 +60,7 @@ export function NotificationItem({
     >
       {/* Icon */}
       <div className="flex-shrink-0 mt-0.5">
-        <NotificationIcon type={notification.type} className="w-5 h-5" />
+        <NotificationIcon type={notification.type as NotificationType} className="w-5 h-5" />
       </div>
 
       {/* Content */}
@@ -66,8 +74,25 @@ export function NotificationItem({
           >
             {notification.title}
           </h4>
+
+          {/* Unread indicator: blue dot → checkmark button on row hover */}
           {!notification.isRead && (
-            <span className="flex-shrink-0 w-2 h-2 bg-blue-600 rounded-full mt-1.5" />
+            <button
+              onClick={handleMarkAsRead}
+              title="Mark as read"
+              className={cn(
+                "flex-shrink-0 flex items-center justify-center w-5 h-5 mt-0.5 rounded-full transition-all",
+                isHovered
+                  ? "bg-blue-100 hover:bg-blue-600 hover:text-white text-blue-600"
+                  : ""
+              )}
+            >
+              {isHovered ? (
+                <Check className="w-3 h-3" />
+              ) : (
+                <span className="w-2 h-2 bg-blue-600 rounded-full" />
+              )}
+            </button>
           )}
         </div>
 

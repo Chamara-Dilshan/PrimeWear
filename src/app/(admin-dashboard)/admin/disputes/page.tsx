@@ -84,17 +84,17 @@ export default async function AdminDisputesPage({
   const { data: disputes, pagination, stats } = result;
 
   return (
-    <div className="p-8 space-y-8">
+    <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold mb-2">Dispute Management</h1>
+        <h1 className="text-2xl md:text-3xl font-bold mb-2">Dispute Management</h1>
         <p className="text-muted-foreground">
           View and resolve customer disputes
         </p>
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-4">
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">

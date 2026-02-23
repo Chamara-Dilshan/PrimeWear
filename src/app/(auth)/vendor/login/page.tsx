@@ -73,7 +73,11 @@ function VendorLoginContent() {
 
 export default function VendorLoginPage() {
   return (
-    <Suspense fallback={<div>Loading...</div>}>
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-white to-purple-50" />
+      }
+    >
       <VendorLoginContent />
     </Suspense>
   );

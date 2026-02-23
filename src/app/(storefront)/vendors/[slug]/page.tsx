@@ -95,9 +95,9 @@ export default function VendorStorePage() {
       try {
         const response = await fetch("/api/categories");
         const data = await response.json();
-        if (data.success) {
+        if (data.success && Array.isArray(data.data?.categories)) {
           const allCategories: any[] = [];
-          data.data.forEach((cat: any) => {
+          data.data.categories.forEach((cat: any) => {
             allCategories.push(cat);
             if (cat.children) {
               cat.children.forEach((child: any) => {

@@ -26,14 +26,6 @@ export function StatCard({
   isLoading = false,
   description,
 }: StatCardProps) {
-  const colorClasses = {
-    purple: "from-purple-500 to-purple-600",
-    blue: "from-blue-500 to-blue-600",
-    green: "from-green-500 to-green-600",
-    orange: "from-orange-500 to-orange-600",
-    red: "from-red-500 to-red-600",
-    yellow: "from-yellow-500 to-yellow-600",
-  };
 
   if (isLoading) {
     return (
@@ -56,13 +48,8 @@ export function StatCard({
     <Card className="hover:shadow-md transition-shadow">
       <CardContent className="p-6">
         <div className="flex items-center justify-between mb-4">
-          <div
-            className={cn(
-              "w-12 h-12 bg-gradient-to-br rounded-lg flex items-center justify-center shadow-lg",
-              colorClasses[color]
-            )}
-          >
-            <Icon className="w-6 h-6 text-white" />
+          <div className="w-12 h-12 bg-muted rounded-lg flex items-center justify-center">
+            <Icon className="w-6 h-6 text-foreground" />
           </div>
 
           {change !== undefined && (

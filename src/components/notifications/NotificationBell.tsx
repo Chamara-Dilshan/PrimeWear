@@ -5,8 +5,10 @@
 
 "use client";
 
+import { useEffect } from "react";
 import { Bell } from "lucide-react";
 import { useNotificationStore } from "@/stores/notificationStore";
+import { useAuthStore } from "@/stores/authStore";
 import { cn } from "@/lib/utils";
 
 interface NotificationBellProps {
@@ -19,6 +21,22 @@ export function NotificationBell({
   className,
 }: NotificationBellProps) {
   const unreadCount = useNotificationStore((state) => state.unreadCount);
+  const setUnreadCount = useNotificationStore((state) => state.setUnreadCount);
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+
+  // Fetch accurate unread count on mount — only when logged in
+  useEffect(() => {
+    if (!isAuthenticated) return;
+
+    fetch("/api/notifications/unread-count")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success) {
+          setUnreadCount(data.data.count);
+        }
+      })
+      .catch(() => {});
+  }, [isAuthenticated, setUnreadCount]);
 
   return (
     <button

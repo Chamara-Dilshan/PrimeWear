@@ -87,7 +87,7 @@ export function CategorySelector({
 
   if (isLoading) {
     return (
-      <Select disabled>
+      <Select disabled value="null">
         <SelectTrigger>
           <SelectValue placeholder="Loading..." />
         </SelectTrigger>

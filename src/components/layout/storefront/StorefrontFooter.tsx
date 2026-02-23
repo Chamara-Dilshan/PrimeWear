@@ -143,7 +143,7 @@ export function StorefrontFooter() {
         {/* Bottom Bar */}
         <div className="flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-muted-foreground">
           <p>© {currentYear} PrimeWear. All rights reserved.</p>
-          <div className="flex gap-6">
+          <div className="flex flex-wrap gap-4 justify-center md:justify-start">
             <Link
               href="/privacy"
               className="hover:text-foreground transition-colors"

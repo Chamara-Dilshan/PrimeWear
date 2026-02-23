@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { StorefrontHeader } from "@/components/layout/storefront/StorefrontHeader";
 import { StorefrontNav } from "@/components/layout/storefront/StorefrontNav";
 import { StorefrontFooter } from "@/components/layout/storefront/StorefrontFooter";
@@ -13,12 +13,14 @@ export default function StorefrontLayout({
 }) {
   const [isMobileMenuOpen, setMobileMenuOpen] = useState(false);
 
+  const handleMobileMenuClose = useCallback(() => setMobileMenuOpen(false), []);
+
   return (
     <div className="flex min-h-screen flex-col">
       {/* Mobile Menu */}
       <MobileMenu
         isOpen={isMobileMenuOpen}
-        onClose={() => setMobileMenuOpen(false)}
+        onClose={handleMobileMenuClose}
       />
 
       {/* Header */}

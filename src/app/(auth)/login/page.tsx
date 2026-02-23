@@ -80,7 +80,11 @@ function CustomerLoginContent() {
 
 export default function CustomerLoginPage() {
   return (
-    <Suspense fallback={<div>Loading...</div>}>
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-pink-50 via-white to-orange-50" />
+      }
+    >
       <CustomerLoginContent />
     </Suspense>
   );

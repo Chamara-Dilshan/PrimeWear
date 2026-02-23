@@ -203,6 +203,7 @@ export async function POST(request: NextRequest) {
         perUserLimit: data.perUserLimit,
         vendorId, // Always set to current vendor
         isActive: data.isActive,
+        isFeatured: data.isFeatured ?? false,
         validFrom: data.validFrom,
         validUntil: data.validUntil,
       },

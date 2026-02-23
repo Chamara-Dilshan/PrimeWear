@@ -220,7 +220,7 @@ export default function ProductDetailPage() {
         {/* Product Info */}
         <div className="space-y-6">
           <div>
-            <h1 className="text-3xl font-bold mb-2">{product.name}</h1>
+            <h1 className="text-2xl md:text-3xl font-bold mb-2">{product.name}</h1>
 
             {/* Rating */}
             <div className="flex items-center gap-2 mb-4">

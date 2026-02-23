@@ -28,10 +28,10 @@ interface Category {
   slug: string;
 }
 
-interface ProductFiltersProps {
-  categories: Category[];
-  onFilterChange: (filters: FilterValues) => void;
-  initialFilters?: FilterValues;
+interface Vendor {
+  id: string;
+  businessName: string;
+  slug: string;
 }
 
 export interface FilterValues {
@@ -41,10 +41,19 @@ export interface FilterValues {
   sortBy?: string;
   sortOrder?: string;
   inStock?: boolean;
+  vendorId?: string;
+}
+
+interface ProductFiltersProps {
+  categories: Category[];
+  vendors?: Vendor[];
+  onFilterChange: (filters: FilterValues) => void;
+  initialFilters?: FilterValues;
 }
 
 export function ProductFilters({
   categories,
+  vendors = [],
   onFilterChange,
   initialFilters = {},
 }: ProductFiltersProps) {
@@ -67,8 +76,9 @@ export function ProductFilters({
     onFilterChange(clearedFilters);
   };
 
-  const hasActiveFilters = Object.keys(filters).some(
-    (key) => filters[key as keyof FilterValues] !== undefined && filters[key as keyof FilterValues] !== ""
+  const filterKeys: (keyof FilterValues)[] = ["categoryId", "minPrice", "maxPrice", "inStock", "vendorId"];
+  const hasActiveFilters = filterKeys.some(
+    (key) => filters[key] !== undefined && filters[key] !== "" && filters[key] !== false
   );
 
   return (
@@ -141,6 +151,31 @@ export function ProductFilters({
                 </SelectContent>
               </Select>
             </div>
+
+            {/* Vendor Filter */}
+            {vendors.length > 0 && (
+              <div className="space-y-2">
+                <Label>Vendor</Label>
+                <Select
+                  value={filters.vendorId || "all"}
+                  onValueChange={(value) =>
+                    handleFilterChange("vendorId", value === "all" ? undefined : value)
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="All Vendors" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Vendors</SelectItem>
+                    {vendors.map((vendor) => (
+                      <SelectItem key={vendor.id} value={vendor.id}>
+                        {vendor.businessName}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
 
             {/* Price Range */}
             <div className="space-y-2">

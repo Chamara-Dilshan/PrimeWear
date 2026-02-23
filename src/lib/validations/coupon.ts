@@ -57,6 +57,7 @@ export const createCouponSchema = z.object({
     .default(1),
   vendorId: z.string().optional().nullable(),
   isActive: z.boolean().default(true),
+  isFeatured: z.boolean().default(false),
   validFrom: z.coerce.date(),
   validUntil: z.coerce.date().optional().nullable(),
 });
@@ -116,6 +117,7 @@ export const updateCouponSchema = z.object({
     .positive("Per user limit must be positive")
     .optional(),
   isActive: z.boolean().optional(),
+  isFeatured: z.boolean().optional(),
   validFrom: z.coerce.date().optional(),
   validUntil: z.coerce.date().optional().nullable(),
 });

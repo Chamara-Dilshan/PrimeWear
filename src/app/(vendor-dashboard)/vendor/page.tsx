@@ -12,9 +12,9 @@ export default function VendorDashboardPage() {
   return (
     <div className="space-y-6">
       {/* Welcome Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold">Dashboard</h1>
+          <h1 className="text-2xl md:text-3xl font-bold">Dashboard</h1>
           <p className="text-muted-foreground mt-1">
             Welcome back, {user?.firstName || user?.email}
           </p>
@@ -31,11 +31,11 @@ export default function VendorDashboardPage() {
       <VendorOverviewStats />
 
       {/* Quick Actions */}
-      <div className="bg-card rounded-xl border p-8">
+      <div className="bg-card rounded-xl border p-4 md:p-8">
         <h2 className="text-xl font-semibold mb-4">
           Quick Actions
         </h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           <Link href="/vendor/products">
             <Button variant="outline" className="w-full justify-start">
               Manage Products

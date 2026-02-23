@@ -81,12 +81,13 @@ export default function CategoryPage() {
         const response = await fetch("/api/categories");
         const data = await response.json();
 
-        if (data.success) {
-          setAllCategories(data.data);
+        if (data.success && Array.isArray(data.data?.categories)) {
+          const cats = data.data.categories;
+          setAllCategories(cats);
 
           // Find current category
           let foundCategory = null;
-          for (const cat of data.data) {
+          for (const cat of cats) {
             if (cat.slug === slug) {
               foundCategory = cat;
               break;

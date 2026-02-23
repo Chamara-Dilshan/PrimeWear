@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/stores/authStore";
 import { useLayoutStore } from "@/stores/layoutStore";
@@ -24,6 +24,8 @@ export default function AdminDashboardLayout({
     setMobileMenuOpen,
   } = useLayoutStore();
   const isMobile = useIsMobile();
+
+  const handleMobileMenuClose = useCallback(() => setMobileMenuOpen(false), [setMobileMenuOpen]);
 
   // Auth check - wait for hydration before redirecting
   useEffect(() => {
@@ -53,7 +55,7 @@ export default function AdminDashboardLayout({
       {isMobile && (
         <AdminMobileNav
           isOpen={isMobileMenuOpen}
-          onClose={() => setMobileMenuOpen(false)}
+          onClose={handleMobileMenuClose}
         />
       )}
 

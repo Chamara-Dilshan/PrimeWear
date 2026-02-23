@@ -321,7 +321,7 @@ export default function CheckoutPage() {
       </div>
 
       {/* Main content */}
-      <div className="grid lg:grid-cols-3 gap-8">
+      <div className="grid md:grid-cols-3 gap-4 md:gap-8">
         {/* Left column - Steps */}
         <div className="lg:col-span-2 space-y-6">
           {/* Step 1: Shipping Address */}

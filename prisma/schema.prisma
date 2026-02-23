@@ -563,6 +563,7 @@ model Coupon {
   vendorId       String?      // Null for platform-wide coupons
   vendor         Vendor?      @relation(fields: [vendorId], references: [id], onDelete: Cascade)
   isActive       Boolean      @default(true)
+  isFeatured     Boolean      @default(false)
   validFrom      DateTime     @default(now())
   validUntil     DateTime?
   createdAt      DateTime     @default(now())
@@ -575,6 +576,7 @@ model Coupon {
   @@index([code])
   @@index([vendorId])
   @@index([isActive])
+  @@index([isActive, isFeatured])
 }
 
 model CouponUsage {

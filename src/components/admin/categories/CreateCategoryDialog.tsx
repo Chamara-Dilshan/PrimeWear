@@ -27,7 +27,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { CategorySelector } from "./CategorySelector";
-import { validateImage } from "@/lib/utils/image";
+import { validateImageFile } from "@/lib/utils/image";
 import {
   createCategorySchema,
   CreateCategoryInput,
@@ -64,8 +64,8 @@ export function CreateCategoryDialog({
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Validate image
-    const error = await validateImage(file);
+    // Validate type and size only (no dimension requirement for category images)
+    const error = validateImageFile(file);
     if (error) {
       toast({
         variant: "destructive",
@@ -283,13 +283,11 @@ export function CreateCategoryDialog({
                           </Button>
                         </div>
                       ) : (
-                        <label className="flex flex-col items-center justify-center w-full h-48 border-2 border-dashed rounded-lg cursor-pointer hover:bg-accent">
-                          <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                        <div className="relative flex flex-col items-center justify-center w-full h-48 border-2 border-dashed rounded-lg cursor-pointer hover:bg-accent">
+                          <div className="flex flex-col items-center justify-center pt-5 pb-6 pointer-events-none">
                             <Upload className="w-8 h-8 mb-2 text-muted-foreground" />
                             <p className="text-sm text-muted-foreground">
-                              {isUploading
-                                ? "Uploading..."
-                                : "Click to upload image"}
+                              {isUploading ? "Uploading..." : "Click to upload image"}
                             </p>
                             <p className="text-xs text-muted-foreground mt-1">
                               JPG, PNG or WEBP (max 5MB)
@@ -297,12 +295,12 @@ export function CreateCategoryDialog({
                           </div>
                           <input
                             type="file"
-                            className="hidden"
+                            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer disabled:cursor-not-allowed"
                             accept="image/jpeg,image/jpg,image/png,image/webp"
                             onChange={handleImageUpload}
                             disabled={isUploading}
                           />
-                        </label>
+                        </div>
                       )}
                     </div>
                   </FormControl>

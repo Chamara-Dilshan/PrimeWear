@@ -27,12 +27,21 @@ export function UserMenu() {
   // Guest user
   if (!isAuthenticated || !user) {
     return (
-      <Button variant="default" size="sm" asChild>
-        <Link href="/login">
-          <LogIn className="w-4 h-4 mr-2" />
-          Login
-        </Link>
-      </Button>
+      <>
+        {/* Mobile: icon only to save header space */}
+        <Button variant="default" size="icon" className="md:hidden" asChild>
+          <Link href="/login" aria-label="Login">
+            <LogIn className="w-4 h-4" />
+          </Link>
+        </Button>
+        {/* Desktop: icon + text */}
+        <Button variant="default" size="sm" className="hidden md:flex" asChild>
+          <Link href="/login">
+            <LogIn className="w-4 h-4 mr-2" />
+            Login
+          </Link>
+        </Button>
+      </>
     );
   }
 

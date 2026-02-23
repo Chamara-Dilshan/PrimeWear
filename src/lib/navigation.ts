@@ -14,6 +14,8 @@ import {
   Home,
   Store,
   Bell,
+  ShoppingBag,
+  Percent,
 } from "lucide-react";
 
 export interface NavItem {
@@ -127,6 +129,11 @@ export const storefrontNavItems: NavItem[] = [
     icon: Home,
   },
   {
+    label: "Shop",
+    href: "/products",
+    icon: ShoppingBag,
+  },
+  {
     label: "Categories",
     href: "/categories",
     icon: FolderTree,
@@ -135,6 +142,11 @@ export const storefrontNavItems: NavItem[] = [
     label: "Vendors",
     href: "/vendors",
     icon: Store,
+  },
+  {
+    label: "Deals",
+    href: "/deals",
+    icon: Percent,
   },
 ];
 

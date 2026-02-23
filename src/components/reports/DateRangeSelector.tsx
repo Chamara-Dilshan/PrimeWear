@@ -55,6 +55,7 @@ export function DateRangeSelector({
           variant={isCurrentRange(preset) ? "default" : "outline"}
           size="sm"
           onClick={() => handlePresetClick(preset)}
+          className={cn(index >= 3 ? "hidden sm:inline-flex" : "")}
         >
           {preset.label}
         </Button>

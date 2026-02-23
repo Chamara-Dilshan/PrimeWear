@@ -202,6 +202,7 @@ export async function PATCH(
           perUserLimit: data.perUserLimit,
         }),
         ...(data.isActive !== undefined && { isActive: data.isActive }),
+        ...(data.isFeatured !== undefined && { isFeatured: data.isFeatured }),
         ...(data.validFrom && { validFrom: data.validFrom }),
         ...(data.validUntil !== undefined && { validUntil: data.validUntil }),
       },
