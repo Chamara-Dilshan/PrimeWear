@@ -1,33 +1,50 @@
 import { NextRequest, NextResponse } from "next/server";
-import { tokenUtils } from "./lib/auth";
-import { UserRole } from "@prisma/client";
+import { jwtVerify } from "jose";
+
+// Plain string role type — avoids importing @prisma/client in Edge Runtime
+type Role = "ADMIN" | "VENDOR" | "CUSTOMER";
+
+// Verify JWT using jose (Edge Runtime compatible)
+async function verifyToken(token: string): Promise<{ userId: string; email: string; role: Role } | null> {
+  try {
+    const secret = new TextEncoder().encode(process.env.JWT_SECRET || "");
+    const { payload } = await jwtVerify(token, secret);
+    return {
+      userId: payload.userId as string,
+      email: payload.email as string,
+      role: payload.role as Role,
+    };
+  } catch {
+    return null;
+  }
+}
 
 // Define route patterns and their required roles
-const protectedRoutes = {
+const protectedRoutes: Record<string, Role[]> = {
   // ── Page routes ──────────────────────────────────────────────────────────
-  "/admin": [UserRole.ADMIN],
-  "/vendor": [UserRole.VENDOR],
-  "/orders": [UserRole.CUSTOMER, UserRole.ADMIN, UserRole.VENDOR],
-  "/cart": [UserRole.CUSTOMER],
-  "/checkout": [UserRole.CUSTOMER],
-  "/payment": [UserRole.CUSTOMER],
-  "/profile": [UserRole.CUSTOMER, UserRole.ADMIN, UserRole.VENDOR],
-  "/notifications": [UserRole.CUSTOMER, UserRole.ADMIN, UserRole.VENDOR],
+  "/admin": ["ADMIN"],
+  "/vendor": ["VENDOR"],
+  "/orders": ["CUSTOMER", "ADMIN", "VENDOR"],
+  "/cart": ["CUSTOMER"],
+  "/checkout": ["CUSTOMER"],
+  "/payment": ["CUSTOMER"],
+  "/profile": ["CUSTOMER", "ADMIN", "VENDOR"],
+  "/notifications": ["CUSTOMER", "ADMIN", "VENDOR"],
   // ── Customer API routes ───────────────────────────────────────────────────
-  "/api/cart": [UserRole.CUSTOMER],
-  "/api/addresses": [UserRole.CUSTOMER],
-  "/api/checkout": [UserRole.CUSTOMER],
-  "/api/orders": [UserRole.CUSTOMER],
-  "/api/disputes": [UserRole.CUSTOMER],
-  "/api/payments/initiate": [UserRole.CUSTOMER],
-  "/api/coupons": [UserRole.CUSTOMER],
+  "/api/cart": ["CUSTOMER"],
+  "/api/addresses": ["CUSTOMER"],
+  "/api/checkout": ["CUSTOMER"],
+  "/api/orders": ["CUSTOMER"],
+  "/api/disputes": ["CUSTOMER"],
+  "/api/payments/initiate": ["CUSTOMER"],
+  "/api/coupons": ["CUSTOMER"],
   // ── Shared API routes ─────────────────────────────────────────────────────
-  "/api/chat": [UserRole.CUSTOMER, UserRole.VENDOR],
-  "/api/upload": [UserRole.CUSTOMER, UserRole.VENDOR, UserRole.ADMIN],
-  "/api/notifications": [UserRole.CUSTOMER, UserRole.ADMIN, UserRole.VENDOR],
+  "/api/chat": ["CUSTOMER", "VENDOR"],
+  "/api/upload": ["CUSTOMER", "VENDOR", "ADMIN"],
+  "/api/notifications": ["CUSTOMER", "ADMIN", "VENDOR"],
   // ── Role-restricted API routes ────────────────────────────────────────────
-  "/api/admin": [UserRole.ADMIN],
-  "/api/vendor": [UserRole.VENDOR],
+  "/api/admin": ["ADMIN"],
+  "/api/vendor": ["VENDOR"],
 };
 
 // Public routes that don't require authentication
@@ -46,6 +63,9 @@ const publicRoutes = [
   "/api/auth/refresh",
   "/api/auth/otp",
   "/api/payments/webhook", // PayHere webhook must be public
+  "/api/products",
+  "/api/categories",
+  "/api/vendors",
   "/shipping",
   "/returns",
   "/terms",
@@ -56,10 +76,10 @@ const publicRoutes = [
   "/new-arrivals",
 ];
 
-export function middleware(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Skip middleware for static files and api routes (except protected ones)
+  // Skip middleware for static files
   if (
     pathname.startsWith("/_next") ||
     pathname.startsWith("/static") ||
@@ -70,16 +90,17 @@ export function middleware(request: NextRequest) {
 
   // Check if route is public
   const isPublicRoute = publicRoutes.some(
-    (route) => pathname === route || pathname.startsWith(route)
+    (route) => pathname === route || pathname.startsWith(route + "/") || pathname === route
   );
 
   if (isPublicRoute) {
     return NextResponse.next();
   }
 
-  // Check if route is protected
-  const protectedRoute = Object.keys(protectedRoutes).find((route) =>
-    pathname.startsWith(route)
+  // Check if route is protected — use exact match or trailing slash to avoid
+  // /api/vendors being matched by /api/vendor prefix
+  const protectedRoute = Object.keys(protectedRoutes).find(
+    (route) => pathname === route || pathname.startsWith(route + "/")
   );
 
   if (!protectedRoute) {
@@ -87,7 +108,7 @@ export function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // Get token from cookie or header
+  // Get token from cookie or Authorization header
   const tokenFromCookie = request.cookies.get("accessToken")?.value;
   const authHeader = request.headers.get("Authorization");
   const tokenFromHeader = authHeader?.startsWith("Bearer ")
@@ -96,10 +117,9 @@ export function middleware(request: NextRequest) {
 
   const token = tokenFromCookie || tokenFromHeader;
 
-  // No token, redirect to appropriate login page
+  // No token — redirect to the appropriate login page
   if (!token) {
     const url = request.nextUrl.clone();
-
     if (pathname.startsWith("/admin")) {
       url.pathname = "/admin/login";
     } else if (pathname.startsWith("/vendor")) {
@@ -107,18 +127,16 @@ export function middleware(request: NextRequest) {
     } else {
       url.pathname = "/login";
     }
-
     url.searchParams.set("redirect", pathname);
     return NextResponse.redirect(url);
   }
 
-  // Verify token
-  const payload = tokenUtils.verifyAccessToken(token);
+  // Verify token (jose — Edge Runtime compatible)
+  const payload = await verifyToken(token);
 
   if (!payload) {
-    // Invalid token, redirect to login
+    // Invalid / expired token — redirect to login and clear the cookie
     const url = request.nextUrl.clone();
-
     if (pathname.startsWith("/admin")) {
       url.pathname = "/admin/login";
     } else if (pathname.startsWith("/vendor")) {
@@ -126,24 +144,21 @@ export function middleware(request: NextRequest) {
     } else {
       url.pathname = "/login";
     }
-
     url.searchParams.set("redirect", pathname);
     const response = NextResponse.redirect(url);
     response.cookies.delete("accessToken");
     return response;
   }
 
-  // Check if user has required role
-  const requiredRoles = protectedRoutes[protectedRoute as keyof typeof protectedRoutes] as UserRole[];
+  // Check if user has the required role for this route
+  const requiredRoles = protectedRoutes[protectedRoute];
   if (!requiredRoles.includes(payload.role)) {
-    // User doesn't have required role, return 403
     const url = request.nextUrl.clone();
     url.pathname = "/403";
     return NextResponse.redirect(url);
   }
 
-  // User is authenticated and authorized
-  // Pass user info via request headers so API route handlers can read them
+  // Authenticated & authorized — forward user info to route handlers via headers
   const requestHeaders = new Headers(request.headers);
   requestHeaders.set("X-User-Id", payload.userId);
   requestHeaders.set("X-User-Role", payload.role);
@@ -157,11 +172,10 @@ export function middleware(request: NextRequest) {
 export const config = {
   matcher: [
     /*
-     * Match all request paths except for the ones starting with:
-     * - api/auth (auth endpoints are public)
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
+     * Match all request paths except:
+     * - api/auth  (public auth endpoints)
+     * - _next/static / _next/image (Next.js internals)
+     * - favicon.ico
      */
     "/((?!api/auth|_next/static|_next/image|favicon.ico).*)",
   ],

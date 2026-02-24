@@ -2,26 +2,19 @@ import { redirect } from 'next/navigation';
 import { cookies } from 'next/headers';
 import { tokenUtils } from '@/lib/auth';
 import { DisputeCard } from '@/components/disputes/DisputeCard';
-import { DisputeStatusBadge } from '@/components/disputes/DisputeStatusBadge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
+import Link from 'next/link';
 import { Search, FileQuestion } from 'lucide-react';
-import { DisputeStatus, DISPUTE_STATUS_LABELS } from '@/types/dispute';
+import { DISPUTE_STATUS_LABELS } from '@/types/dispute';
 
 interface DisputesPageProps {
-  searchParams: {
+  searchParams: Promise<{
     status?: string;
     search?: string;
     page?: string;
-  };
+  }>;
 }
 
 async function getDisputes(filters: any) {
@@ -57,6 +50,8 @@ async function getDisputes(filters: any) {
 export default async function DisputesPage({
   searchParams,
 }: DisputesPageProps) {
+  const resolvedParams = await searchParams;
+
   // Verify authentication
   const cookieStore = await cookies();
   const token = cookieStore.get('accessToken')?.value;
@@ -71,7 +66,7 @@ export default async function DisputesPage({
   }
 
   // Fetch disputes
-  const result = await getDisputes(searchParams);
+  const result = await getDisputes(resolvedParams);
 
   if (!result || !result.success) {
     return (
@@ -135,55 +130,38 @@ export default async function DisputesPage({
         </Card>
       </div>
 
-      {/* Filters */}
+      {/* Status Filter Tabs */}
+      <div className="flex flex-wrap gap-2 mb-6">
+        <Link href="/orders/disputes">
+          <Button variant={!resolvedParams.status ? 'default' : 'outline'} size="sm">
+            All
+          </Button>
+        </Link>
+        {Object.entries(DISPUTE_STATUS_LABELS).map(([key, label]) => (
+          <Link key={key} href={`/orders/disputes?status=${key}`}>
+            <Button
+              variant={resolvedParams.status === key ? 'default' : 'outline'}
+              size="sm"
+            >
+              {label}
+            </Button>
+          </Link>
+        ))}
+      </div>
+
+      {/* Search */}
       <Card className="mb-6">
         <CardContent className="pt-6">
-          <div className="flex flex-col sm:flex-row gap-4">
-            {/* Search */}
-            <div className="flex-1">
-              <form method="get" className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  type="search"
-                  name="search"
-                  placeholder="Search disputes..."
-                  defaultValue={searchParams.search}
-                  className="pl-10"
-                />
-              </form>
-            </div>
-
-            {/* Status Filter */}
-            <div className="w-full sm:w-48">
-              <form method="get">
-                <Select
-                  name="status"
-                  defaultValue={searchParams.status || 'all'}
-                  onValueChange={(value) => {
-                    const url = new URL(window.location.href);
-                    if (value === 'all') {
-                      url.searchParams.delete('status');
-                    } else {
-                      url.searchParams.set('status', value);
-                    }
-                    window.location.href = url.toString();
-                  }}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Filter by status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Statuses</SelectItem>
-                    {Object.entries(DISPUTE_STATUS_LABELS).map(([key, label]) => (
-                      <SelectItem key={key} value={key}>
-                        {label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </form>
-            </div>
-          </div>
+          <form method="get" className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              type="search"
+              name="search"
+              placeholder="Search disputes..."
+              defaultValue={resolvedParams.search}
+              className="pl-10"
+            />
+          </form>
         </CardContent>
       </Card>
 
@@ -195,7 +173,7 @@ export default async function DisputesPage({
               <FileQuestion className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
               <h3 className="text-lg font-semibold mb-2">No disputes found</h3>
               <p className="text-muted-foreground">
-                {searchParams.status || searchParams.search
+                {resolvedParams.status || resolvedParams.search
                   ? 'Try adjusting your filters'
                   : "You haven't opened any disputes yet"}
               </p>
@@ -223,7 +201,7 @@ export default async function DisputesPage({
                   >
                     <a
                       href={`?${new URLSearchParams({
-                        ...searchParams,
+                        ...resolvedParams,
                         page: page.toString(),
                       }).toString()}`}
                     >

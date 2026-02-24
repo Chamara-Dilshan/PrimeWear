@@ -95,18 +95,16 @@ export default async function OrdersPage({
           <p className="text-2xl font-bold">{stats.total}</p>
         </div>
         <div className="border rounded-lg p-4 bg-card">
-          <p className="text-sm text-muted-foreground mb-1">Processing</p>
+          <p className="text-sm text-muted-foreground mb-1">Pending</p>
+          <p className="text-2xl font-bold">{stats.pending}</p>
+        </div>
+        <div className="border rounded-lg p-4 bg-card">
+          <p className="text-sm text-muted-foreground mb-1">Active</p>
           <p className="text-2xl font-bold">{stats.processing}</p>
         </div>
         <div className="border rounded-lg p-4 bg-card">
-          <p className="text-sm text-muted-foreground mb-1">Shipped</p>
-          <p className="text-2xl font-bold">{stats.shipped}</p>
-        </div>
-        <div className="border rounded-lg p-4 bg-card">
-          <p className="text-sm text-muted-foreground mb-1">Delivered</p>
-          <p className="text-2xl font-bold">
-            {stats.delivered + stats.deliveryConfirmed}
-          </p>
+          <p className="text-sm text-muted-foreground mb-1">Completed</p>
+          <p className="text-2xl font-bold">{stats.completed}</p>
         </div>
       </div>
 
