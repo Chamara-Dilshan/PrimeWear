@@ -66,16 +66,17 @@ async function getOrders(searchParams: SearchParams) {
 export default async function OrdersPage({
   searchParams,
 }: {
-  searchParams: SearchParams;
+  searchParams: Promise<SearchParams>;
 }) {
-  const data = await getOrders(searchParams);
+  const resolvedParams = await searchParams;
+  const data = await getOrders(resolvedParams);
 
   if (!data) {
     redirect("/login");
   }
 
   const { orders, pagination, stats } = data;
-  const currentStatus = searchParams.status;
+  const currentStatus = resolvedParams.status;
 
   return (
     <div className="container max-w-6xl mx-auto px-4 py-8">

@@ -17,6 +17,18 @@ export async function GET(request: NextRequest) {
     // Auth check
     const user = requireVendor(request);
 
+    // Look up vendor record (TokenPayload has no vendorId field)
+    const vendorRecord = await prisma.vendor.findUnique({
+      where: { userId: user.userId },
+    });
+    if (!vendorRecord) {
+      return NextResponse.json(
+        { success: false, error: "Vendor not found" },
+        { status: 404 }
+      );
+    }
+    const vendorId = vendorRecord.id;
+
     // Parse and validate query parameters
     const searchParams = request.nextUrl.searchParams;
     const queryParams = {
@@ -32,7 +44,7 @@ export async function GET(request: NextRequest) {
 
     if (!validation.success) {
       return NextResponse.json(
-        { success: false, error: validation.error.errors[0].message },
+        { success: false, error: validation.error.issues[0].message },
         { status: 400 }
       );
     }

@@ -73,7 +73,7 @@ export const createProductSchema = z
 
 export type CreateProductInput = z.infer<typeof createProductSchema>;
 
-// Update product schema (partial, excluding images and variants)
+// Update product schema (partial, excluding images)
 // Note: Cannot use .omit() on schemas with refinements, so we define it manually
 export const updateProductSchema = z.object({
   categoryId: z.string().cuid("Invalid category").optional(),
@@ -110,6 +110,7 @@ export const updateProductSchema = z.object({
   stock: z.number().int().min(0, "Stock cannot be negative").optional(),
   lowStockThreshold: z.number().int().min(0).optional(),
   isActive: z.boolean().optional(),
+  variants: z.array(productVariantSchema).max(50).optional(),
 });
 
 export type UpdateProductInput = z.infer<typeof updateProductSchema>;

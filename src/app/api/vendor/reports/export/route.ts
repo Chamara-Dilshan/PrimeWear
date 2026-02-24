@@ -31,13 +31,22 @@ export async function POST(request: NextRequest) {
 
     const { reportType, filters } = validation.data;
 
+    // Get vendor record
+    const vendorRecord = await prisma.vendor.findUnique({
+      where: { userId: user.userId },
+    });
+    if (!vendorRecord) {
+      return NextResponse.json({ success: false, error: "Vendor not found" }, { status: 404 });
+    }
+    const vendorId = vendorRecord.id;
+
     let data: any[] = [];
 
     // Fetch data based on report type
     switch (reportType) {
       case "sales": {
         const whereClause: any = {
-          vendorId: user.vendorId,
+          vendorId,
           order: {
             status: {
               in: [
@@ -113,7 +122,7 @@ export async function POST(request: NextRequest) {
       case "products": {
         const products = await prisma.product.findMany({
           where: {
-            vendorId: vendorId,
+            vendorId,
           },
           select: {
             name: true,

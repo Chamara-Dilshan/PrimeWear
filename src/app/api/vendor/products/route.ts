@@ -17,6 +17,15 @@ export async function POST(request: NextRequest) {
     // Auth check
     const user = requireVendor(request);
 
+    // Get vendor record
+    const vendorRecord = await prisma.vendor.findUnique({
+      where: { userId: user.userId },
+    });
+    if (!vendorRecord) {
+      return NextResponse.json({ success: false, error: "Vendor not found" }, { status: 404 });
+    }
+    const vendorId = vendorRecord.id;
+
     // Parse and validate request body
     const body = await request.json();
     const validation = createProductSchema.safeParse(body);
@@ -148,6 +157,15 @@ export async function GET(request: NextRequest) {
   try {
     // Auth check
     const user = requireVendor(request);
+
+    // Get vendor record
+    const vendorRecord = await prisma.vendor.findUnique({
+      where: { userId: user.userId },
+    });
+    if (!vendorRecord) {
+      return NextResponse.json({ success: false, error: "Vendor not found" }, { status: 404 });
+    }
+    const vendorId = vendorRecord.id;
 
     // Parse query parameters
     const { searchParams } = new URL(request.url);

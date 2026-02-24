@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import { formatDistance } from "date-fns";
-import { Edit, Eye, MoreVertical } from "lucide-react";
+import { Edit, Eye, KeyRound, MoreVertical } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 import {
   Table,
   TableBody,
@@ -22,6 +23,7 @@ import {
 import { VendorWithUser } from "@/types/vendor";
 import { VendorStatusToggle } from "./VendorStatusToggle";
 import { EditVendorDialog } from "./EditVendorDialog";
+import { VendorCredentialsDialog } from "./VendorCredentialsDialog";
 import { Decimal } from "@prisma/client/runtime/library";
 
 interface VendorTableProps {
@@ -31,6 +33,38 @@ interface VendorTableProps {
 
 export function VendorTable({ vendors, onVendorUpdated }: VendorTableProps) {
   const [editingVendor, setEditingVendor] = useState<VendorWithUser | null>(null);
+  const [resetCredentials, setResetCredentials] = useState<{
+    businessName: string;
+    email: string;
+    tempPassword: string;
+  } | null>(null);
+  const [resettingId, setResettingId] = useState<string | null>(null);
+  const { toast } = useToast();
+
+  const handleResetPassword = async (vendor: VendorWithUser) => {
+    setResettingId(vendor.id);
+    try {
+      const response = await fetch("/api/admin/vendors/reset-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ vendorId: vendor.id }),
+      });
+      const result = await response.json();
+      if (!result.success) {
+        toast({ variant: "destructive", title: "Error", description: result.error || "Failed to reset password" });
+        return;
+      }
+      setResetCredentials({
+        businessName: result.data.businessName,
+        email: result.data.email,
+        tempPassword: result.data.tempPassword,
+      });
+    } catch {
+      toast({ variant: "destructive", title: "Error", description: "An unexpected error occurred" });
+    } finally {
+      setResettingId(null);
+    }
+  };
 
   const formatCurrency = (amount: Decimal) => {
     return `Rs. ${Number(amount).toLocaleString("en-LK", {
@@ -114,6 +148,10 @@ export function VendorTable({ vendors, onVendorUpdated }: VendorTableProps) {
                           <Edit className="mr-2 h-4 w-4" />
                           Edit Details
                         </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleResetPassword(vendor)} disabled={resettingId === vendor.id}>
+                          <KeyRound className="mr-2 h-4 w-4" />
+                          {resettingId === vendor.id ? "Resetting..." : "Reset Password"}
+                        </DropdownMenuItem>
                         <DropdownMenuItem>
                           <Eye className="mr-2 h-4 w-4" />
                           View Details
@@ -138,6 +176,18 @@ export function VendorTable({ vendors, onVendorUpdated }: VendorTableProps) {
             setEditingVendor(null);
             onVendorUpdated();
           }}
+        />
+      )}
+
+      {/* Reset Password Credentials Dialog */}
+      {resetCredentials && (
+        <VendorCredentialsDialog
+          open={!!resetCredentials}
+          onOpenChange={(open) => !open && setResetCredentials(null)}
+          businessName={resetCredentials.businessName}
+          email={resetCredentials.email}
+          tempPassword={resetCredentials.tempPassword}
+          isReset
         />
       )}
     </>

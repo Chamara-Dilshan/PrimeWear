@@ -26,6 +26,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { createVendorSchema, type CreateVendorInput } from "@/lib/validations/vendor";
+import { VendorCredentialsDialog } from "./VendorCredentialsDialog";
 
 interface CreateVendorDialogProps {
   open: boolean;
@@ -39,6 +40,11 @@ export function CreateVendorDialog({
   onSuccess,
 }: CreateVendorDialogProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [credentials, setCredentials] = useState<{
+    businessName: string;
+    email: string;
+    tempPassword: string;
+  } | null>(null);
   const { toast } = useToast();
 
   const form = useForm<CreateVendorInput>({
@@ -92,46 +98,24 @@ export function CreateVendorDialog({
         return;
       }
 
-      // Check if email was sent successfully
-      if (result.data.emailSent) {
-        toast({
-          title: "Success",
-          description: `Vendor ${data.businessName} created successfully. Welcome email sent.`,
-        });
-      } else {
-        // Email failed - show credentials to admin
-        toast({
-          title: "Vendor Created (Email Failed)",
-          description: result.data.warning || "Please note the credentials below to share with the vendor manually.",
-          variant: "default",
-        });
-
-        // Show credentials in a separate toast or alert
-        if (result.data.tempPassword) {
-          setTimeout(() => {
-            toast({
-              title: "⚠️ Manual Credentials Required",
-              description: (
-                <div className="space-y-2">
-                  <p className="font-semibold">Please share these credentials with the vendor:</p>
-                  <div className="bg-yellow-50 border border-yellow-200 rounded p-3 mt-2">
-                    <p className="text-sm"><strong>Email:</strong> {data.businessEmail}</p>
-                    <p className="text-sm"><strong>Temporary Password:</strong> {result.data.tempPassword}</p>
-                  </div>
-                  <p className="text-xs text-muted-foreground mt-2">
-                    The vendor must change this password on first login.
-                  </p>
-                </div>
-              ) as any,
-              duration: 30000, // Show for 30 seconds
-            });
-          }, 500);
-        }
-      }
-
       form.reset();
       onSuccess();
-      onOpenChange(false);
+
+      if (result.data.emailSent) {
+        toast({
+          title: "Vendor Created",
+          description: `${data.businessName} created successfully. Welcome email sent to ${data.businessEmail}.`,
+        });
+        onOpenChange(false);
+      } else {
+        // Email failed — close create dialog, show credentials dialog
+        onOpenChange(false);
+        setCredentials({
+          businessName: data.businessName,
+          email: data.businessEmail,
+          tempPassword: result.data.tempPassword,
+        });
+      }
     } catch (error) {
       console.error("Error creating vendor:", error);
       toast({
@@ -145,6 +129,16 @@ export function CreateVendorDialog({
   };
 
   return (
+    <>
+    {credentials && (
+      <VendorCredentialsDialog
+        open={!!credentials}
+        onOpenChange={(open) => !open && setCredentials(null)}
+        businessName={credentials.businessName}
+        email={credentials.email}
+        tempPassword={credentials.tempPassword}
+      />
+    )}
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
@@ -281,5 +275,6 @@ export function CreateVendorDialog({
         </Form>
       </DialogContent>
     </Dialog>
+    </>
   );
 }

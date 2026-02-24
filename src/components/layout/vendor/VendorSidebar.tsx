@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { ChevronLeft, ChevronRight, LogOut, Store as StoreIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 import { Logo } from "../shared/Logo";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -29,15 +30,27 @@ export function VendorSidebar({
   const unreadCount = useNotificationStore((state) => state.unreadCount);
   const router = useRouter();
 
+  const [shopName, setShopName] = useState("My Store");
+  const [isShopOpen, setIsShopOpen] = useState(true);
+  const [availableBalance, setAvailableBalance] = useState<number | null>(null);
+
+  useEffect(() => {
+    fetch("/api/vendor/wallet")
+      .then((res) => res.json())
+      .then((result) => {
+        if (result.success) {
+          setAvailableBalance(result.data.balance.availableBalance);
+          setShopName(result.data.vendor.businessName);
+          setIsShopOpen(result.data.vendor.isShopOpen);
+        }
+      })
+      .catch(() => {/* silently ignore */});
+  }, []);
+
   const handleLogout = () => {
     logout();
     router.push("/vendor/login");
   };
-
-  // Mock data - will be replaced with real data in Phase 4+
-  const mockShopName = "My Store";
-  const mockShopStatus = "Open";
-  const mockWalletBalance = "Rs. 45,230.00";
 
   return (
     <aside
@@ -63,14 +76,14 @@ export function VendorSidebar({
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <StoreIcon className="w-4 h-4" />
-              <span className="text-sm font-medium truncate">{mockShopName}</span>
+              <span className="text-sm font-medium truncate">{shopName}</span>
             </div>
-            <Badge variant={mockShopStatus === "Open" ? "default" : "secondary"} className="text-xs">
-              {mockShopStatus}
+            <Badge variant={isShopOpen ? "default" : "secondary"} className="text-xs">
+              {isShopOpen ? "Open" : "Closed"}
             </Badge>
           </div>
           <p className="text-xs text-muted-foreground mt-1">
-            Available: {mockWalletBalance}
+            Available: {availableBalance === null ? "..." : `Rs. ${availableBalance.toLocaleString("en-LK", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
           </p>
         </div>
       )}

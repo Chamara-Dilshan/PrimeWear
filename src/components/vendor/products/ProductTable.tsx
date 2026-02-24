@@ -168,6 +168,7 @@ export function ProductTable({
                         src={product.images[0].url}
                         alt={product.images[0].altText || product.name}
                         fill
+                        sizes="48px"
                         className="object-cover"
                       />
                     </div>
@@ -210,12 +211,18 @@ export function ProductTable({
                 </TableCell>
                 <TableCell>
                   <div className="flex items-center gap-2">
-                    <span className="text-sm">{product.stock}</span>
-                    {product.lowStockAlert && (
-                      <Badge variant="destructive" className="text-xs">
-                        <AlertCircle className="w-3 h-3 mr-1" />
-                        Low
-                      </Badge>
+                    {product._count?.variants && product._count.variants > 0 ? (
+                      <span className="text-sm text-muted-foreground">By variant</span>
+                    ) : (
+                      <>
+                        <span className="text-sm">{product.stock}</span>
+                        {product.lowStockAlert && (
+                          <Badge variant="destructive" className="text-xs">
+                            <AlertCircle className="w-3 h-3 mr-1" />
+                            Low
+                          </Badge>
+                        )}
+                      </>
                     )}
                   </div>
                 </TableCell>

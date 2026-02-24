@@ -119,6 +119,7 @@ export function ImageGallery({
               src={image.url}
               alt={image.altText || `Product image ${index + 1}`}
               fill
+              sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
               className="object-cover"
             />
           </div>

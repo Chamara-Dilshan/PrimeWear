@@ -133,6 +133,12 @@ export const useCartStore = create<CartState>()(
             credentials: "include",
           });
 
+          // Silently ignore 401 — user is not a customer (vendor/admin browsing storefront)
+          if (response.status === 401 || response.status === 403) {
+            set({ isLoading: false });
+            return;
+          }
+
           const data: CartResponse = await response.json();
 
           if (data.success && data.data) {

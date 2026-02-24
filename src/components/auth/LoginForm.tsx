@@ -57,6 +57,17 @@ export function LoginForm({ redirectUrl, userType }: LoginFormProps) {
         return;
       }
 
+      // Validate that the logged-in user's role matches the login page
+      const expectedRole = userType === "admin" ? "ADMIN" : "VENDOR";
+      if (result.data.user.role !== expectedRole) {
+        toast.error(
+          `This account is not a ${userType}. Please use the ${result.data.user.role === "ADMIN" ? "Admin" : "Vendor"} login page.`
+        );
+        // Clear the cookies that were just set by the API
+        await fetch("/api/auth/logout", { method: "POST" });
+        return;
+      }
+
       // Store auth data
       setAuth(
         result.data.user,

@@ -17,6 +17,18 @@ export async function GET(request: NextRequest) {
     // Auth check
     const user = requireVendor(request);
 
+    // Look up vendor record (TokenPayload has no vendorId field)
+    const vendorRecord = await prisma.vendor.findUnique({
+      where: { userId: user.userId },
+    });
+    if (!vendorRecord) {
+      return NextResponse.json(
+        { success: false, error: "Vendor not found" },
+        { status: 404 }
+      );
+    }
+    const vendorId = vendorRecord.id;
+
     // Fetch wallet with balances
     const wallet = await prisma.wallet.findUnique({
       where: { vendorId },
@@ -66,6 +78,10 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       success: true,
       data: {
+        vendor: {
+          businessName: vendorRecord.businessName,
+          isShopOpen: vendorRecord.isShopOpen,
+        },
         balance: {
           pendingBalance: wallet.pendingBalance.toNumber(),
           availableBalance: wallet.availableBalance.toNumber(),

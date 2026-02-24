@@ -18,6 +18,15 @@ export async function GET(request: NextRequest) {
     // Auth check
     const user = requireVendor(request);
 
+    // Get vendor record
+    const vendorRecord = await prisma.vendor.findUnique({
+      where: { userId: user.userId },
+    });
+    if (!vendorRecord) {
+      return NextResponse.json({ success: false, error: "Vendor not found" }, { status: 404 });
+    }
+    const vendorId = vendorRecord.id;
+
     // Parse and validate query parameters
     const searchParams = request.nextUrl.searchParams;
     const queryParams = {
@@ -38,7 +47,7 @@ export async function GET(request: NextRequest) {
 
     // Build where clause for order items
     const whereClause: any = {
-      vendorId: user.vendorId,
+      vendorId,
       order: {
         status: {
           in: [
@@ -106,7 +115,7 @@ export async function GET(request: NextRequest) {
     // Get wallet balance
     const wallet = await prisma.wallet.findUnique({
       where: {
-        vendorId: vendorId,
+        vendorId,
       },
       select: {
         pendingBalance: true,

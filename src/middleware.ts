@@ -4,6 +4,7 @@ import { UserRole } from "@prisma/client";
 
 // Define route patterns and their required roles
 const protectedRoutes = {
+  // ── Page routes ──────────────────────────────────────────────────────────
   "/admin": [UserRole.ADMIN],
   "/vendor": [UserRole.VENDOR],
   "/orders": [UserRole.CUSTOMER, UserRole.ADMIN, UserRole.VENDOR],
@@ -12,7 +13,19 @@ const protectedRoutes = {
   "/payment": [UserRole.CUSTOMER],
   "/profile": [UserRole.CUSTOMER, UserRole.ADMIN, UserRole.VENDOR],
   "/notifications": [UserRole.CUSTOMER, UserRole.ADMIN, UserRole.VENDOR],
+  // ── Customer API routes ───────────────────────────────────────────────────
+  "/api/cart": [UserRole.CUSTOMER],
+  "/api/addresses": [UserRole.CUSTOMER],
+  "/api/checkout": [UserRole.CUSTOMER],
+  "/api/orders": [UserRole.CUSTOMER],
+  "/api/disputes": [UserRole.CUSTOMER],
+  "/api/payments/initiate": [UserRole.CUSTOMER],
+  "/api/coupons": [UserRole.CUSTOMER],
+  // ── Shared API routes ─────────────────────────────────────────────────────
+  "/api/chat": [UserRole.CUSTOMER, UserRole.VENDOR],
+  "/api/upload": [UserRole.CUSTOMER, UserRole.VENDOR, UserRole.ADMIN],
   "/api/notifications": [UserRole.CUSTOMER, UserRole.ADMIN, UserRole.VENDOR],
+  // ── Role-restricted API routes ────────────────────────────────────────────
   "/api/admin": [UserRole.ADMIN],
   "/api/vendor": [UserRole.VENDOR],
 };
@@ -33,6 +46,14 @@ const publicRoutes = [
   "/api/auth/refresh",
   "/api/auth/otp",
   "/api/payments/webhook", // PayHere webhook must be public
+  "/shipping",
+  "/returns",
+  "/terms",
+  "/privacy",
+  "/help",
+  "/contact",
+  "/cookies",
+  "/new-arrivals",
 ];
 
 export function middleware(request: NextRequest) {

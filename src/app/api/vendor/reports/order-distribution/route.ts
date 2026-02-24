@@ -35,9 +35,18 @@ export async function GET(request: NextRequest) {
 
     const { dateFrom, dateTo } = validation.data;
 
+    // Get vendor record
+    const vendorRecord = await prisma.vendor.findUnique({
+      where: { userId: user.userId },
+    });
+    if (!vendorRecord) {
+      return NextResponse.json({ success: false, error: "Vendor not found" }, { status: 404 });
+    }
+    const vendorId = vendorRecord.id;
+
     // Build where clause
     const whereClause: any = {
-      vendorId: vendorId,
+      vendorId,
     };
 
     if (dateFrom) {

@@ -18,6 +18,18 @@ export async function GET(
 
     const { id } = await params;
 
+    // Look up vendor record (TokenPayload has no vendorId field)
+    const vendorRecord = await prisma.vendor.findUnique({
+      where: { userId: user.userId },
+    });
+    if (!vendorRecord) {
+      return NextResponse.json(
+        { success: false, error: "Vendor not found" },
+        { status: 404 }
+      );
+    }
+    const vendorId = vendorRecord.id;
+
     // Get product with ownership check
     const product = await prisma.product.findFirst({
       where: {
@@ -79,6 +91,18 @@ export async function PATCH(
     const user = requireVendor(request);
 
     const { id } = await params;
+
+    // Look up vendor record (TokenPayload has no vendorId field)
+    const vendorRecord = await prisma.vendor.findUnique({
+      where: { userId: user.userId },
+    });
+    if (!vendorRecord) {
+      return NextResponse.json(
+        { success: false, error: "Vendor not found" },
+        { status: 404 }
+      );
+    }
+    const vendorId = vendorRecord.id;
 
     // Check if product exists and belongs to vendor
     const existingProduct = await prisma.product.findFirst({
@@ -154,38 +178,71 @@ export async function PATCH(
       });
     }
 
-    // Update product
-    const product = await prisma.product.update({
-      where: { id },
-      data: {
-        ...(data.categoryId && { categoryId: data.categoryId }),
-        ...(data.name && { name: data.name, slug }),
-        ...(data.description !== undefined && {
-          description: data.description,
-        }),
-        ...(data.price !== undefined && { price: data.price }),
-        ...(data.compareAtPrice !== undefined && {
-          compareAtPrice: data.compareAtPrice,
-        }),
-        ...(data.sku !== undefined && { sku: data.sku }),
-        ...(data.stock !== undefined && { stock: data.stock }),
-        ...(data.lowStockThreshold !== undefined && {
-          lowStockThreshold: data.lowStockThreshold,
-        }),
-        ...(data.isActive !== undefined && { isActive: data.isActive }),
-      },
-      include: {
-        category: {
-          select: {
-            id: true,
-            name: true,
+    // Update product and variants in a transaction
+    const product = await prisma.$transaction(async (tx) => {
+      // Update core product fields
+      const updated = await tx.product.update({
+        where: { id },
+        data: {
+          ...(data.categoryId && { categoryId: data.categoryId }),
+          ...(data.name && { name: data.name, slug }),
+          ...(data.description !== undefined && {
+            description: data.description,
+          }),
+          ...(data.price !== undefined && { price: data.price }),
+          ...(data.compareAtPrice !== undefined && {
+            compareAtPrice: data.compareAtPrice,
+          }),
+          ...(data.sku !== undefined && { sku: data.sku }),
+          ...(data.stock !== undefined && { stock: data.stock }),
+          ...(data.lowStockThreshold !== undefined && {
+            lowStockThreshold: data.lowStockThreshold,
+          }),
+          ...(data.isActive !== undefined && { isActive: data.isActive }),
+        },
+        include: {
+          category: {
+            select: {
+              id: true,
+              name: true,
+            },
           },
+          images: {
+            orderBy: { position: "asc" },
+          },
+          variants: true,
         },
-        images: {
-          orderBy: { position: "asc" },
-        },
-        variants: true,
-      },
+      });
+
+      // Replace variants if provided
+      if (data.variants !== undefined) {
+        await tx.productVariant.deleteMany({ where: { productId: id } });
+
+        if (data.variants.length > 0) {
+          await tx.productVariant.createMany({
+            data: data.variants.map((v) => ({
+              productId: id,
+              name: v.name,
+              value: v.value,
+              priceAdjustment: v.priceAdjustment ?? 0,
+              stock: v.stock,
+              sku: v.sku ?? null,
+            })),
+          });
+        }
+
+        // Re-fetch with updated variants
+        return tx.product.findUnique({
+          where: { id },
+          include: {
+            category: { select: { id: true, name: true } },
+            images: { orderBy: { position: "asc" } },
+            variants: { orderBy: { createdAt: "asc" } },
+          },
+        });
+      }
+
+      return updated;
     });
 
     return NextResponse.json({
@@ -222,6 +279,18 @@ export async function DELETE(
     const user = requireVendor(request);
 
     const { id } = await params;
+
+    // Look up vendor record (TokenPayload has no vendorId field)
+    const vendorRecord = await prisma.vendor.findUnique({
+      where: { userId: user.userId },
+    });
+    if (!vendorRecord) {
+      return NextResponse.json(
+        { success: false, error: "Vendor not found" },
+        { status: 404 }
+      );
+    }
+    const vendorId = vendorRecord.id;
 
     // Check if product exists and belongs to vendor
     const existingProduct = await prisma.product.findFirst({

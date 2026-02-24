@@ -29,7 +29,7 @@ import { useToast } from "@/hooks/use-toast";
 import { CategorySelector } from "@/components/admin/categories/CategorySelector";
 import { ImageUploader } from "./ImageUploader";
 import { ImageGallery } from "./ImageGallery";
-import { VariantManager, ProductVariant } from "./VariantManager";
+import { VariantManager, ProductVariant, type VariantSettingsInfo } from "./VariantManager";
 import type { ProductFormData } from "@/types/product";
 import { createProductSchema } from "@/lib/validations/product";
 
@@ -47,6 +47,12 @@ export function ProductForm({ mode, initialData, onSuccess }: ProductFormProps) 
   const [variants, setVariants] = useState<ProductVariant[]>(
     initialData?.variants || []
   );
+  const [variantSettings, setVariantSettings] = useState<VariantSettingsInfo>({
+    hasVariants: (initialData?.variants?.length ?? 0) > 0,
+    pricesVary: false,
+    quantitiesVary: true,
+    typeNames: [],
+  });
   const { toast } = useToast();
   const router = useRouter();
 
@@ -234,6 +240,8 @@ export function ProductForm({ mode, initialData, onSuccess }: ProductFormProps) 
                       onValueChange={field.onChange}
                       placeholder="Select category"
                       allowRoot={false}
+                      apiUrl="/api/categories?pageSize=100"
+                      showAllLevels={true}
                     />
                   </FormControl>
                   <FormMessage />
@@ -300,18 +308,31 @@ export function ProductForm({ mode, initialData, onSuccess }: ProductFormProps) 
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Price (Rs.) *</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="number"
-                      step="0.01"
-                      min="0.01"
-                      placeholder="999.99"
-                      {...field}
-                      onChange={(e) =>
-                        field.onChange(parseFloat(e.target.value) || 0)
-                      }
-                    />
-                  </FormControl>
+                  {variantSettings.hasVariants ? (
+                    <div className="rounded-md border bg-muted/50 px-3 py-2 text-sm">
+                      <p className="font-medium text-muted-foreground">
+                        {variantSettings.pricesVary
+                          ? `Prices vary for each ${variantSettings.typeNames.join(" and ")}`
+                          : `Price is set in variations`}
+                      </p>
+                      <p className="text-xs text-muted-foreground mt-0.5">
+                        Edit in variations ↓
+                      </p>
+                    </div>
+                  ) : (
+                    <FormControl>
+                      <Input
+                        type="number"
+                        step="0.01"
+                        min="0.01"
+                        placeholder="999.99"
+                        {...field}
+                        onChange={(e) =>
+                          field.onChange(parseFloat(e.target.value) || 0)
+                        }
+                      />
+                    </FormControl>
+                  )}
                   <FormMessage />
                 </FormItem>
               )}
@@ -365,21 +386,32 @@ export function ProductForm({ mode, initialData, onSuccess }: ProductFormProps) 
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Stock Quantity *</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="number"
-                      min="0"
-                      placeholder="100"
-                      {...field}
-                      onChange={(e) =>
-                        field.onChange(parseInt(e.target.value) || 0)
-                      }
-                    />
-                  </FormControl>
+                  {variantSettings.hasVariants ? (
+                    <div className="rounded-md border bg-muted/50 px-3 py-2 text-sm">
+                      <p className="font-medium text-muted-foreground">
+                        {variantSettings.quantitiesVary
+                          ? `Quantities vary for each ${variantSettings.typeNames.join(" and ")}`
+                          : `Stock is set in variations`}
+                      </p>
+                      <p className="text-xs text-muted-foreground mt-0.5">
+                        Edit in variations ↓
+                      </p>
+                    </div>
+                  ) : (
+                    <FormControl>
+                      <Input
+                        type="number"
+                        min="0"
+                        placeholder="100"
+                        {...field}
+                        onChange={(e) =>
+                          field.onChange(parseInt(e.target.value) || 0)
+                        }
+                      />
+                    </FormControl>
+                  )}
                   <FormDescription>
-                    {variants.length > 0
-                      ? "Main stock (ignored if using variants)"
-                      : "Available quantity"}
+                    {!variantSettings.hasVariants && "Available quantity"}
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
@@ -436,7 +468,7 @@ export function ProductForm({ mode, initialData, onSuccess }: ProductFormProps) 
               images={images}
               onReorder={handleImagesReordered}
               onDelete={handleImageDelete}
-              minImages={1}
+              minImages={0}
             />
           )}
 
@@ -458,7 +490,12 @@ export function ProductForm({ mode, initialData, onSuccess }: ProductFormProps) 
             </p>
           </div>
 
-          <VariantManager variants={variants} onChange={handleVariantsChange} />
+          <VariantManager
+            variants={variants}
+            onChange={handleVariantsChange}
+            basePrice={form.watch("price") || 0}
+            onSettingsChange={setVariantSettings}
+          />
         </div>
 
         <Separator />

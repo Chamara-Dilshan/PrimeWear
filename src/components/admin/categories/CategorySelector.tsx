@@ -16,6 +16,8 @@ interface CategorySelectorProps {
   excludeId?: string; // Exclude specific category (for edit)
   placeholder?: string;
   allowRoot?: boolean; // Allow "No parent" option
+  apiUrl?: string; // API endpoint to fetch categories from
+  showAllLevels?: boolean; // Show all categories (not just root)
 }
 
 export function CategorySelector({
@@ -24,6 +26,8 @@ export function CategorySelector({
   excludeId,
   placeholder = "Select category",
   allowRoot = true,
+  apiUrl = "/api/admin/categories?pageSize=100",
+  showAllLevels = false,
 }: CategorySelectorProps) {
   const [categories, setCategories] = useState<CategorySelectorItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -34,7 +38,7 @@ export function CategorySelector({
 
   const fetchCategories = async () => {
     try {
-      const response = await fetch("/api/admin/categories?pageSize=100");
+      const response = await fetch(apiUrl);
       const result = await response.json();
 
       if (result.success) {
@@ -108,7 +112,7 @@ export function CategorySelector({
         )}
 
         {categories
-          .filter((cat) => cat.level === 0) // Only show root categories as parents
+          .filter((cat) => showAllLevels || cat.level === 0)
           .map((category) => (
             <SelectItem key={category.id} value={category.id}>
               {getDisplayName(category)}

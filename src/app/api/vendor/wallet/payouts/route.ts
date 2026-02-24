@@ -7,7 +7,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireVendor, handleAuthError } from "@/lib/auth-helpers";
 import { prisma } from "@/lib/prisma";
-import { Prisma } from "@prisma/client";
+import { Prisma, UserRole } from "@prisma/client";
 import {
   requestPayoutSchema,
   vendorPayoutFiltersSchema,
@@ -24,6 +24,18 @@ export async function GET(request: NextRequest) {
   try {
     // Auth check
     const user = requireVendor(request);
+
+    // Look up vendor record (TokenPayload has no vendorId field)
+    const vendorRecord = await prisma.vendor.findUnique({
+      where: { userId: user.userId },
+    });
+    if (!vendorRecord) {
+      return NextResponse.json(
+        { success: false, error: "Vendor not found" },
+        { status: 404 }
+      );
+    }
+    const vendorId = vendorRecord.id;
 
     // Get wallet
     const wallet = await prisma.wallet.findUnique({
@@ -136,6 +148,18 @@ export async function POST(request: NextRequest) {
     // Auth check
     const user = requireVendor(request);
 
+    // Look up vendor record (TokenPayload has no vendorId field)
+    const vendorRecord = await prisma.vendor.findUnique({
+      where: { userId: user.userId },
+    });
+    if (!vendorRecord) {
+      return NextResponse.json(
+        { success: false, error: "Vendor not found" },
+        { status: 404 }
+      );
+    }
+    const vendorId = vendorRecord.id;
+
     // Parse and validate request body
     const body = await request.json();
     const validation = requestPayoutSchema.safeParse(body);
@@ -211,7 +235,7 @@ export async function POST(request: NextRequest) {
           userId: admin.id,
           type: NotificationType.PAYOUT_REQUESTED,
           title: 'Payout Request Received',
-          message: `Vendor ${vendor.businessName || 'Unknown'} has requested a payout of Rs. ${payout.amount.toFixed(2)}.`,
+          message: `Vendor ${vendorRecord.businessName || 'Unknown'} has requested a payout of Rs. ${payout.amount.toFixed(2)}.`,
           link: `/admin/payouts`,
           metadata: {
             payoutId: payout.id,

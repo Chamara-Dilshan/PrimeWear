@@ -40,8 +40,16 @@ export async function GET(request: NextRequest) {
     // Force monthly for earnings breakdown
     const dateTrunc = "month";
 
+    // Get vendor record
+    const vendorRecord = await prisma.vendor.findUnique({
+      where: { userId: user.userId },
+    });
+    if (!vendorRecord) {
+      return NextResponse.json({ success: false, error: "Vendor not found" }, { status: 404 });
+    }
+    const vendorId = vendorRecord.id;
+
     // Build where condition
-    const vendorId = user.vendorId;
     let whereCondition = `oi."vendorId" = '${vendorId}' AND o."status" IN ('PAYMENT_CONFIRMED', 'PROCESSING', 'SHIPPED', 'DELIVERY_CONFIRMED', 'DELIVERED')`;
 
     if (dateFrom) {

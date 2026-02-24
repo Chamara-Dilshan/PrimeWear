@@ -9,16 +9,18 @@ import { useCartStore } from "@/stores/cartStore";
 import { useAuthStore } from "@/stores/authStore";
 
 export function CartButton() {
-  const { isAuthenticated } = useAuthStore();
+  const { isAuthenticated, user } = useAuthStore();
   const { itemCount, fetchCart } = useCartStore();
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
+  const isCustomer = isAuthenticated && user?.role === "CUSTOMER";
+
   useEffect(() => {
-    // Fetch cart from API if user is authenticated
-    if (isAuthenticated) {
+    // Only fetch cart for authenticated customers — not vendors or admins
+    if (isCustomer) {
       fetchCart();
     }
-  }, [isAuthenticated, fetchCart]);
+  }, [isCustomer, fetchCart]);
 
   return (
     <>

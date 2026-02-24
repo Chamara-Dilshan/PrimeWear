@@ -19,6 +19,7 @@ import {
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -366,6 +367,9 @@ export default function AdminCouponsPage() {
         <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Create New Coupon</DialogTitle>
+            <DialogDescription>
+              Fill in the details below to create a new coupon code.
+            </DialogDescription>
           </DialogHeader>
           <CouponForm
             onSubmit={handleCreateCoupon}
@@ -381,6 +385,9 @@ export default function AdminCouponsPage() {
         <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Edit Coupon</DialogTitle>
+            <DialogDescription>
+              Update the coupon details below.
+            </DialogDescription>
           </DialogHeader>
           {selectedCoupon && (
             <CouponForm

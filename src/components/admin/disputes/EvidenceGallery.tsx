@@ -4,6 +4,7 @@ import { useState } from 'react';
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
@@ -75,6 +76,9 @@ export function EvidenceGallery({ evidence }: EvidenceGalleryProps) {
               Evidence {selectedIndex !== null ? selectedIndex + 1 : 0} of{' '}
               {evidence.length}
             </DialogTitle>
+            <DialogDescription>
+              Dispute evidence image viewer
+            </DialogDescription>
           </DialogHeader>
 
           {selectedIndex !== null && (

@@ -1,10 +1,8 @@
 "use client";
 
-import { useState } from "react";
-import { Plus, Trash2 } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Plus, Settings2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import {
   Card,
   CardContent,
@@ -12,7 +10,12 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { ManageVariationsModal, type VariationSettings } from "./ManageVariationsModal";
+import { CombinationTable, type CombinationRow } from "./CombinationTable";
+import { type VariationType } from "./VariationTypeDialog";
 
+// Public interface for parent (ProductForm)
 export interface ProductVariant {
   id?: string;
   name: string;
@@ -22,199 +25,286 @@ export interface ProductVariant {
   sku?: string;
 }
 
+export interface VariantSettingsInfo {
+  hasVariants: boolean;
+  pricesVary: boolean;
+  quantitiesVary: boolean;
+  typeNames: string[];
+}
+
 interface VariantManagerProps {
   variants: ProductVariant[];
   onChange: (variants: ProductVariant[]) => void;
+  basePrice: number;
+  onSettingsChange?: (settings: VariantSettingsInfo) => void;
 }
 
-export function VariantManager({ variants, onChange }: VariantManagerProps) {
-  const [showVariants, setShowVariants] = useState(variants.length > 0);
+// ─── helpers ────────────────────────────────────────────────────────────────
 
-  const addVariant = () => {
-    const newVariant: ProductVariant = {
-      name: "",
-      value: "",
-      priceAdjustment: 0,
+/** Generate all combinations (cross-product) for 1 or 2 variation types. */
+function generateCombinations(types: VariationType[]): CombinationRow[] {
+  if (types.length === 0) return [];
+  if (types.length === 1) {
+    return types[0].options.map((opt) => ({
+      values: { [types[0].name]: opt },
       stock: 0,
-      sku: "",
-    };
-    onChange([...variants, newVariant]);
-    setShowVariants(true);
-  };
+      visible: true,
+    }));
+  }
+  // Cross-product for 2 types
+  return types[0].options.flatMap((opt1) =>
+    types[1].options.map((opt2) => ({
+      values: { [types[0].name]: opt1, [types[1].name]: opt2 },
+      stock: 0,
+      visible: true,
+    }))
+  );
+}
 
-  const removeVariant = (index: number) => {
-    const newVariants = variants.filter((_, i) => i !== index);
-    onChange(newVariants);
-    if (newVariants.length === 0) {
-      setShowVariants(false);
+/**
+ * Merge newly generated combinations with existing ones so that
+ * previously entered price/stock/sku values are preserved for
+ * combinations that still exist.
+ */
+function mergeCombinations(
+  newCombos: CombinationRow[],
+  existing: CombinationRow[]
+): CombinationRow[] {
+  return newCombos.map((nc) => {
+    const key = JSON.stringify(nc.values);
+    const found = existing.find((e) => JSON.stringify(e.values) === key);
+    return found ? { ...nc, price: found.price, stock: found.stock, sku: found.sku, visible: found.visible } : nc;
+  });
+}
+
+/**
+ * Reconstruct types + combinations from saved ProductVariant[].
+ * Stored format: name = "Size" | "Size / Color", value = "L" | "L / Black"
+ */
+function parseVariants(
+  variants: ProductVariant[],
+  basePrice: number
+): { types: VariationType[]; combinations: CombinationRow[] } {
+  if (variants.length === 0) return { types: [], combinations: [] };
+
+  const firstNames = variants[0].name.split(" / ");
+  const typeCount = firstNames.length; // 1 or 2
+
+  // Rebuild types from unique values
+  const optionSets: Record<string, Set<string>> = {};
+  firstNames.forEach((n) => (optionSets[n] = new Set()));
+
+  for (const v of variants) {
+    const nameParts = v.name.split(" / ");
+    const valueParts = v.value.split(" / ");
+    nameParts.forEach((n, i) => {
+      if (!optionSets[n]) optionSets[n] = new Set();
+      optionSets[n].add(valueParts[i] ?? "");
+    });
+  }
+
+  const types: VariationType[] = firstNames.map((n) => ({
+    name: n,
+    options: Array.from(optionSets[n] ?? []),
+  }));
+
+  // Rebuild combination rows
+  const combinations: CombinationRow[] = variants.map((v) => {
+    const nameParts = v.name.split(" / ");
+    const valueParts = v.value.split(" / ");
+    const values: Record<string, string> = {};
+    nameParts.forEach((n, i) => {
+      values[n] = valueParts[i] ?? "";
+    });
+    const absolutePrice = basePrice + (v.priceAdjustment ?? 0);
+    return {
+      values,
+      price: absolutePrice,
+      stock: v.stock,
+      sku: v.sku ?? undefined,
+      visible: true,
+    };
+  });
+
+  return { types, combinations };
+}
+
+/** Convert internal combinations back to ProductVariant[] for the parent form. */
+function toProductVariants(
+  combinations: CombinationRow[],
+  typeNames: string[],
+  basePrice: number
+): ProductVariant[] {
+  return combinations
+    .filter((c) => c.visible)
+    .map((c) => ({
+      name: typeNames.join(" / "),
+      value: typeNames.map((t) => c.values[t]).join(" / "),
+      priceAdjustment: (c.price !== undefined ? c.price : basePrice) - basePrice,
+      stock: c.stock,
+      sku: c.sku ?? "",
+    }));
+}
+
+// ─── component ──────────────────────────────────────────────────────────────
+
+export function VariantManager({
+  variants,
+  onChange,
+  basePrice,
+  onSettingsChange,
+}: VariantManagerProps) {
+  // Parse existing saved variants on first render
+  const parsed = parseVariants(variants, basePrice);
+
+  const [types, setTypes] = useState<VariationType[]>(parsed.types);
+  const [combinations, setCombinations] = useState<CombinationRow[]>(parsed.combinations);
+  const [pricesVary, setPricesVary] = useState(false);
+  const [quantitiesVary, setQuantitiesVary] = useState(true);
+  const [skusVary, setSkusVary] = useState(false);
+  const [modalOpen, setModalOpen] = useState(false);
+
+  const typeNames = types.map((t) => t.name);
+
+  // Sync outward whenever combinations change
+  useEffect(() => {
+    if (types.length === 0) return;
+    onChange(toProductVariants(combinations, typeNames, basePrice));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [combinations, basePrice]);
+
+  // Notify parent of settings changes (for locking price/stock fields)
+  useEffect(() => {
+    onSettingsChange?.({
+      hasVariants: types.length > 0,
+      pricesVary,
+      quantitiesVary,
+      typeNames,
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [types, pricesVary, quantitiesVary]);
+
+  const handleApply = (settings: VariationSettings) => {
+    const newCombos = generateCombinations(settings.types);
+    const merged = mergeCombinations(newCombos, combinations);
+    setTypes(settings.types);
+    setCombinations(merged);
+    setPricesVary(settings.pricesVary);
+    setQuantitiesVary(settings.quantitiesVary);
+    setSkusVary(settings.skusVary);
+
+    if (settings.types.length === 0) {
+      onChange([]);
     }
   };
 
-  const updateVariant = (
-    index: number,
-    field: keyof ProductVariant,
-    value: any
-  ) => {
-    const newVariants = variants.map((variant, i) =>
-      i === index ? { ...variant, [field]: value } : variant
-    );
-    onChange(newVariants);
+  const handleClearVariations = () => {
+    setTypes([]);
+    setCombinations([]);
+    onChange([]);
   };
 
-  if (!showVariants) {
+  // ── empty state ────────────────────────────────────────────────────────────
+  if (types.length === 0) {
     return (
       <Card>
         <CardHeader>
           <CardTitle>Product Variants</CardTitle>
           <CardDescription>
-            Add variants like size, color, or other options (optional)
+            Add variations like size, color, or other options (optional)
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <Button type="button" variant="outline" onClick={addVariant}>
-            <Plus className="mr-2 h-4 w-4" />
-            Add Variant
+          <Button
+            type="button"
+            variant="outline"
+            className="rounded-full"
+            onClick={() => setModalOpen(true)}
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            Add variations
           </Button>
+
+          <ManageVariationsModal
+            open={modalOpen}
+            onClose={() => setModalOpen(false)}
+            initialSettings={{ types: [], pricesVary: false, quantitiesVary: true, skusVary: false }}
+            onApply={handleApply}
+          />
         </CardContent>
       </Card>
     );
   }
 
+  // ── active state ───────────────────────────────────────────────────────────
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Product Variants</CardTitle>
-        <CardDescription>
-          Configure product variations with different pricing and stock
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        {variants.map((variant, index) => (
-          <div
-            key={index}
-            className="grid grid-cols-1 md:grid-cols-5 gap-4 p-4 border rounded-lg relative"
-          >
-            {/* Remove Button */}
+        <div className="flex items-start justify-between">
+          <div>
+            <CardTitle>Product Variants</CardTitle>
+            <CardDescription className="mt-1">
+              {combinations.filter((c) => c.visible).length} active variant
+              {combinations.filter((c) => c.visible).length !== 1 ? "s" : ""}
+            </CardDescription>
+          </div>
+          <div className="flex gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => setModalOpen(true)}
+            >
+              <Settings2 className="h-4 w-4 mr-2" />
+              Manage variations
+            </Button>
             <Button
               type="button"
               variant="ghost"
               size="sm"
-              className="absolute top-2 right-2"
-              onClick={() => removeVariant(index)}
+              className="text-destructive hover:text-destructive"
+              onClick={handleClearVariations}
             >
-              <Trash2 className="h-4 w-4 text-destructive" />
+              Remove all
             </Button>
-
-            {/* Variant Name (e.g., "Size", "Color") */}
-            <div className="space-y-2">
-              <Label htmlFor={`variant-${index}-name`}>
-                Name *
-              </Label>
-              <Input
-                id={`variant-${index}-name`}
-                placeholder="Size, Color, etc."
-                value={variant.name}
-                onChange={(e) =>
-                  updateVariant(index, "name", e.target.value)
-                }
-                maxLength={50}
-              />
-            </div>
-
-            {/* Variant Value (e.g., "XL", "Red") */}
-            <div className="space-y-2">
-              <Label htmlFor={`variant-${index}-value`}>
-                Value *
-              </Label>
-              <Input
-                id={`variant-${index}-value`}
-                placeholder="XL, Red, etc."
-                value={variant.value}
-                onChange={(e) =>
-                  updateVariant(index, "value", e.target.value)
-                }
-                maxLength={100}
-              />
-            </div>
-
-            {/* Price Adjustment */}
-            <div className="space-y-2">
-              <Label htmlFor={`variant-${index}-price`}>
-                Price Adjustment (Rs.)
-              </Label>
-              <Input
-                id={`variant-${index}-price`}
-                type="number"
-                step="0.01"
-                placeholder="0.00"
-                value={variant.priceAdjustment || 0}
-                onChange={(e) =>
-                  updateVariant(
-                    index,
-                    "priceAdjustment",
-                    parseFloat(e.target.value) || 0
-                  )
-                }
-              />
-              <p className="text-xs text-muted-foreground">
-                +/- from base price
-              </p>
-            </div>
-
-            {/* Stock */}
-            <div className="space-y-2">
-              <Label htmlFor={`variant-${index}-stock`}>
-                Stock *
-              </Label>
-              <Input
-                id={`variant-${index}-stock`}
-                type="number"
-                min="0"
-                placeholder="0"
-                value={variant.stock}
-                onChange={(e) =>
-                  updateVariant(
-                    index,
-                    "stock",
-                    parseInt(e.target.value) || 0
-                  )
-                }
-              />
-            </div>
-
-            {/* SKU */}
-            <div className="space-y-2">
-              <Label htmlFor={`variant-${index}-sku`}>SKU</Label>
-              <Input
-                id={`variant-${index}-sku`}
-                placeholder="Optional"
-                value={variant.sku || ""}
-                onChange={(e) =>
-                  updateVariant(index, "sku", e.target.value)
-                }
-                maxLength={100}
-              />
-            </div>
           </div>
-        ))}
+        </div>
 
-        <Button
-          type="button"
-          variant="outline"
-          onClick={addVariant}
-          className="w-full"
-        >
-          <Plus className="mr-2 h-4 w-4" />
-          Add Another Variant
-        </Button>
+        {/* Type summary chips */}
+        <div className="flex flex-wrap gap-2 pt-2">
+          {types.map((t) => (
+            <div key={t.name} className="flex items-center gap-1">
+              <span className="text-xs font-medium text-muted-foreground">
+                {t.name}:
+              </span>
+              {t.options.map((opt) => (
+                <Badge key={opt} variant="outline" className="text-xs">
+                  {opt}
+                </Badge>
+              ))}
+            </div>
+          ))}
+        </div>
+      </CardHeader>
 
-        {variants.length > 0 && (
-          <p className="text-sm text-muted-foreground">
-            {variants.length} variant{variants.length > 1 ? "s" : ""} added.
-            Each variant tracks stock independently.
-          </p>
-        )}
+      <CardContent>
+        <CombinationTable
+          combinations={combinations}
+          typeNames={typeNames}
+          pricesVary={pricesVary}
+          quantitiesVary={quantitiesVary}
+          skusVary={skusVary}
+          basePrice={basePrice}
+          onChange={setCombinations}
+        />
       </CardContent>
+
+      <ManageVariationsModal
+        open={modalOpen}
+        onClose={() => setModalOpen(false)}
+        initialSettings={{ types, pricesVary, quantitiesVary, skusVary }}
+        onApply={handleApply}
+      />
     </Card>
   );
 }

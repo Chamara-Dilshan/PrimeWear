@@ -65,16 +65,17 @@ async function getVendorOrders(searchParams: SearchParams) {
 export default async function VendorOrdersPage({
   searchParams,
 }: {
-  searchParams: SearchParams;
+  searchParams: Promise<SearchParams>;
 }) {
-  const data = await getVendorOrders(searchParams);
+  const resolvedParams = await searchParams;
+  const data = await getVendorOrders(resolvedParams);
 
   if (!data) {
     redirect("/vendor/login");
   }
 
   const { orders, pagination, stats } = data;
-  const currentStatus = searchParams.status;
+  const currentStatus = resolvedParams.status;
 
   return (
     <div className="p-8">
