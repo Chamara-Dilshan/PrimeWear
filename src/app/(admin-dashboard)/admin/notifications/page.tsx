@@ -47,7 +47,7 @@ export default function AdminNotificationsPage() {
           title: title.trim(),
           message: message.trim(),
           link: link.trim() || undefined,
-          target,
+          recipientRole: target,
         }),
       });
 
@@ -56,7 +56,7 @@ export default function AdminNotificationsPage() {
       if (data.success) {
         toast({
           title: "Announcement Sent",
-          description: `Successfully sent to ${data.data.count} user(s)`,
+          description: `Successfully sent to ${data.data.recipientCount} user(s)`,
         });
 
         // Reset form

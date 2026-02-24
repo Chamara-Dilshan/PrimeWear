@@ -4,6 +4,7 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
+import { UserRole } from "@prisma/client";
 import { requireAdmin, handleAuthError } from "@/lib/auth-helpers";
 import { prisma } from "@/lib/prisma";
 import { createNotification } from "@/lib/notifications";
@@ -37,7 +38,7 @@ export async function POST(request: NextRequest) {
         {
           success: false,
           error: "Invalid announcement data",
-          details: validation.error.errors,
+          details: validation.error.issues,
         },
         { status: 400 }
       );

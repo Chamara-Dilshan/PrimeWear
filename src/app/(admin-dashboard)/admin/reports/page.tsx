@@ -8,6 +8,7 @@ import { AdminTopVendors } from "@/components/admin/reports/AdminTopVendors";
 import { AdminRevenueByCategory } from "@/components/admin/reports/AdminRevenueByCategory";
 import { AdminPaymentMethods } from "@/components/admin/reports/AdminPaymentMethods";
 import { DateRangeSelector } from "@/components/reports/DateRangeSelector";
+import { ExportButton } from "@/components/reports/ExportButton";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
@@ -39,17 +40,36 @@ export default function AdminReportsPage() {
   const dateFromStr = formatDateForAPI(dateFrom);
   const dateToStr = formatDateForAPI(dateTo);
 
+  const handleExport = async () => {
+    const response = await fetch("/api/admin/reports/export", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ reportType: "sales", filters: { dateFrom: dateFromStr, dateTo: dateToStr } }),
+    });
+    if (!response.ok) throw new Error("Export failed");
+    const blob = await response.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `admin-report-${dateFromStr}-${dateToStr}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div>
-        <div className="flex items-center gap-2 mb-2">
-          <BarChart3 className="h-8 w-8 text-primary" />
-          <h1 className="text-3xl font-bold">Reports & Analytics</h1>
+      <div className="flex items-start justify-between">
+        <div>
+          <div className="flex items-center gap-2 mb-2">
+            <BarChart3 className="h-8 w-8 text-primary" />
+            <h1 className="text-3xl font-bold">Reports & Analytics</h1>
+          </div>
+          <p className="text-muted-foreground">
+            Comprehensive platform performance metrics and insights
+          </p>
         </div>
-        <p className="text-muted-foreground">
-          Comprehensive platform performance metrics and insights
-        </p>
+        <ExportButton onExport={handleExport} filename="admin-report" />
       </div>
 
       {/* Filters */}
