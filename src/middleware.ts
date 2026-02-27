@@ -34,7 +34,7 @@ const protectedRoutes: Record<string, Role[]> = {
   "/api/cart": ["CUSTOMER"],
   "/api/addresses": ["CUSTOMER"],
   "/api/checkout": ["CUSTOMER"],
-  "/api/orders": ["CUSTOMER"],
+  "/api/orders": ["CUSTOMER", "ADMIN"],
   "/api/disputes": ["CUSTOMER"],
   "/api/payments/initiate": ["CUSTOMER"],
   "/api/coupons": ["CUSTOMER"],

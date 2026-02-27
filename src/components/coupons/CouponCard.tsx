@@ -64,7 +64,7 @@ export function CouponCard({
   const discountText =
     coupon.type === CouponType.PERCENTAGE
       ? `${coupon.value}% OFF`
-      : `Rs. ${formatCurrency(coupon.value)} OFF`;
+      : `${formatCurrency(coupon.value)} OFF`;
 
   const isExpired = coupon.validUntil && new Date() > new Date(coupon.validUntil);
   const isNotYetValid = new Date() < new Date(coupon.validFrom);
@@ -144,7 +144,7 @@ export function CouponCard({
             <div className="flex items-center gap-2 text-muted-foreground">
               <ShoppingCart className="h-4 w-4" />
               <span>
-                Min. order: Rs. {formatCurrency(coupon.minOrderAmount)}
+                Min. order: {formatCurrency(coupon.minOrderAmount)}
               </span>
             </div>
           )}
@@ -152,7 +152,7 @@ export function CouponCard({
           {coupon.maxDiscount && coupon.type === CouponType.PERCENTAGE && (
             <div className="flex items-center gap-2 text-muted-foreground">
               <TrendingUp className="h-4 w-4" />
-              <span>Max. discount: Rs. {formatCurrency(coupon.maxDiscount)}</span>
+              <span>Max. discount: {formatCurrency(coupon.maxDiscount)}</span>
             </div>
           )}
 

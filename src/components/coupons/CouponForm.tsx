@@ -55,9 +55,9 @@ export function CouponForm({
     defaultValues: {
       code: coupon?.code || "",
       type: coupon?.type || CouponType.PERCENTAGE,
-      value: coupon?.value.toNumber() || 0,
-      minOrderAmount: coupon?.minOrderAmount?.toNumber() || undefined,
-      maxDiscount: coupon?.maxDiscount?.toNumber() || undefined,
+      value: coupon?.value ? Number(coupon.value) : 0,
+      minOrderAmount: coupon?.minOrderAmount ? Number(coupon.minOrderAmount) : undefined,
+      maxDiscount: coupon?.maxDiscount ? Number(coupon.maxDiscount) : undefined,
       usageLimit: coupon?.usageLimit || undefined,
       perUserLimit: coupon?.perUserLimit || 1,
       vendorId: coupon?.vendorId || null,

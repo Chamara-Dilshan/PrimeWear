@@ -5,8 +5,7 @@
 
 "use client";
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { use, useEffect, useState } from "react";
 import { OrderStatusBadge } from "@/components/orders/OrderStatusBadge";
 import { OrderTimeline } from "@/components/orders/OrderTimeline";
 import { VendorOrderGroup } from "@/components/orders/VendorOrderGroup";
@@ -25,16 +24,15 @@ import {
 import Link from "next/link";
 
 interface AdminOrderDetailsPageProps {
-  params: {
+  params: Promise<{
     orderId: string;
-  };
+  }>;
 }
 
 export default function AdminOrderDetailsPage({
   params,
 }: AdminOrderDetailsPageProps) {
-  const { orderId } = params;
-  const router = useRouter();
+  const { orderId } = use(params);
   const [orderData, setOrderData] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [overrideDialogOpen, setOverrideDialogOpen] = useState(false);
@@ -81,7 +79,9 @@ export default function AdminOrderDetailsPage({
     );
   }
 
-  const { order, statusHistory, itemsByVendor } = orderData;
+  const { order } = orderData;
+  const statusHistory = order.statusHistory;
+  const itemsByVendor = order.itemsByVendor;
 
   return (
     <div className="p-8">
@@ -204,7 +204,7 @@ export default function AdminOrderDetailsPage({
             <div className="text-sm space-y-2">
               <div>
                 <p className="text-muted-foreground">Email</p>
-                <p className="font-medium">{order.customer?.user?.email || "N/A"}</p>
+                <p className="font-medium">{order.customer?.email || "N/A"}</p>
               </div>
               <div>
                 <p className="text-muted-foreground">Customer ID</p>
@@ -220,18 +220,18 @@ export default function AdminOrderDetailsPage({
               Shipping Address
             </h3>
             <div className="text-sm space-y-1">
-              <p className="font-medium">{order.shippingSnapshot.fullName}</p>
-              <p>{order.shippingSnapshot.addressLine1}</p>
-              {order.shippingSnapshot.addressLine2 && (
-                <p>{order.shippingSnapshot.addressLine2}</p>
+              <p className="font-medium">{order.shippingAddress.fullName}</p>
+              <p>{order.shippingAddress.addressLine1}</p>
+              {order.shippingAddress.addressLine2 && (
+                <p>{order.shippingAddress.addressLine2}</p>
               )}
               <p>
-                {order.shippingSnapshot.city},{" "}
-                {order.shippingSnapshot.province}
+                {order.shippingAddress.city},{" "}
+                {order.shippingAddress.province}
               </p>
-              <p>{order.shippingSnapshot.postalCode}</p>
+              <p>{order.shippingAddress.postalCode}</p>
               <p className="pt-2 text-muted-foreground">
-                Phone: {order.shippingSnapshot.phone}
+                Phone: {order.shippingAddress.phone}
               </p>
             </div>
           </div>
@@ -253,7 +253,7 @@ export default function AdminOrderDetailsPage({
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Method:</span>
                   <span className="font-medium">
-                    {order.payment.paymentMethod}
+                    {order.payment.method}
                   </span>
                 </div>
                 {order.payment.paidAt && (
