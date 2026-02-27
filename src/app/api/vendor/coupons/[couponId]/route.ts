@@ -16,13 +16,13 @@ import { updateCouponSchema } from "@/lib/validations/coupon";
  */
 export async function GET(
   request: NextRequest,
-  { params }: { params: { couponId: string } }
+  { params }: { params: Promise<{ couponId: string }> }
 ) {
   try {
     // Auth check
     const user = requireVendor(request);
 
-    const { couponId } = params;
+    const { couponId } = await params;
 
     // Get vendor record to resolve vendorId
     const vendorRecord = await prisma.vendor.findUnique({
@@ -130,13 +130,13 @@ export async function GET(
  */
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { couponId: string } }
+  { params }: { params: Promise<{ couponId: string }> }
 ) {
   try {
     // Auth check
     const user = requireVendor(request);
 
-    const { couponId } = params;
+    const { couponId } = await params;
 
     // Get vendor record to resolve vendorId
     const vendorRecord = await prisma.vendor.findUnique({
@@ -254,13 +254,13 @@ export async function PATCH(
  */
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { couponId: string } }
+  { params }: { params: Promise<{ couponId: string }> }
 ) {
   try {
     // Auth check
     const user = requireVendor(request);
 
-    const { couponId } = params;
+    const { couponId } = await params;
 
     // Get vendor record to resolve vendorId
     const vendorRecord = await prisma.vendor.findUnique({

@@ -24,7 +24,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 export default function CartPage() {
   const { isAuthenticated } = useAuthStore();
-  const { items, itemCount, fetchCart, clearGuestCart, clearCart } = useCartStore();
+  const { items, fetchCart, clearGuestCart, clearCart } = useCartStore();
+  const itemCount = items.reduce((sum, item) => sum + item.quantity, 0);
   const [isLoading, setIsLoading] = useState(true);
   const [isClearing, setIsClearing] = useState(false);
 

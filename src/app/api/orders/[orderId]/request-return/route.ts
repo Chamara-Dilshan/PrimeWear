@@ -33,7 +33,7 @@ async function requireCustomer(request: NextRequest): Promise<string | null> {
  */
 export async function POST(
   request: NextRequest,
-  { params }: { params: { orderId: string } }
+  { params }: { params: Promise<{ orderId: string }> }
 ) {
   try {
     const customerId = await requireCustomer(request);
@@ -45,7 +45,7 @@ export async function POST(
       );
     }
 
-    const { orderId } = params;
+    const { orderId } = await params;
 
     // Validate request body
     const body = await request.json();

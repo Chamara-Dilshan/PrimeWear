@@ -16,7 +16,9 @@ export function CartSummary({
   showCheckoutButton = true,
   onCheckout,
 }: CartSummaryProps) {
-  const { items, itemCount, subtotal } = useCartStore();
+  const { items } = useCartStore();
+  const itemCount = items.reduce((sum, item) => sum + item.quantity, 0);
+  const subtotal = items.reduce((sum, item) => sum + item.finalPrice * item.quantity, 0);
 
   const hasStockIssues = items.some(
     (item) => item.stock === 0 || item.quantity > item.stock

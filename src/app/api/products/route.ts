@@ -85,6 +85,10 @@ export async function GET(request: NextRequest) {
       prisma.product.findMany({
         where,
         include: {
+          images: {
+            select: { url: true },
+            orderBy: { position: "asc" },
+          },
           category: {
             select: {
               id: true,
@@ -112,9 +116,11 @@ export async function GET(request: NextRequest) {
       prisma.product.count({ where }),
     ]);
 
-    // Add rating placeholders (reviews not implemented yet)
+    // Add rating placeholders (reviews not implemented yet) and flatten images to string[]
     const productsWithRatings = products.map((product) => ({
       ...product,
+      price: product.price.toNumber(),
+      images: product.images.map((img) => img.url),
       averageRating: 0,
       reviewCount: 0,
     }));

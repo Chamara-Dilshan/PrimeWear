@@ -24,13 +24,9 @@ interface CartDrawerProps {
 
 export function CartDrawer({ open, onOpenChange }: CartDrawerProps) {
   const { isAuthenticated } = useAuthStore();
-  const {
-    items,
-    itemCount,
-    subtotal,
-    removeGuestCartItem,
-    removeCartItem,
-  } = useCartStore();
+  const { items, removeGuestCartItem, removeCartItem } = useCartStore();
+  const itemCount = items.reduce((sum, item) => sum + item.quantity, 0);
+  const subtotal = items.reduce((sum, item) => sum + item.finalPrice * item.quantity, 0);
 
   const handleRemoveItem = async (itemId: string) => {
     if (isAuthenticated) {

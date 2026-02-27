@@ -19,13 +19,13 @@ import { NotificationType } from "@/types/notification";
  */
 export async function POST(
   request: NextRequest,
-  { params }: { params: { payoutId: string } }
+  { params }: { params: Promise<{ payoutId: string }> }
 ) {
   try {
     // Auth check
     requireAdmin(request);
 
-    const { payoutId } = params;
+    const { payoutId } = await params;
 
     // Parse and validate request body
     const body = await request.json();

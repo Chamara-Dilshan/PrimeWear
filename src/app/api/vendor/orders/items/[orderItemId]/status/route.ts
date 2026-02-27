@@ -73,13 +73,13 @@ async function updateParentOrderStatus(orderId: string, tx: any): Promise<void> 
  */
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { orderItemId: string } }
+  { params }: { params: Promise<{ orderItemId: string }> }
 ) {
   try {
     // Auth check
     const user = requireVendor(request);
 
-    const { orderItemId } = params;
+    const { orderItemId } = await params;
 
     // Validate request body
     const body = await request.json();

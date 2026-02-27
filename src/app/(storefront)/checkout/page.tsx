@@ -119,7 +119,7 @@ export default function CheckoutPage() {
   }, []);
 
   // Calculate totals
-  const subtotal = cartStore.subtotal;
+  const subtotal = cartStore.items.reduce((sum, item) => sum + item.finalPrice * item.quantity, 0);
   const discount = appliedCoupon?.discount?.amount || 0;
   const shippingAmount = 0; // Free shipping for now
   const total = subtotal - discount + shippingAmount;
@@ -439,7 +439,7 @@ export default function CheckoutPage() {
         {/* Right column - Summary (sticky) */}
         <div className="lg:col-span-1">
           <CheckoutSummary
-            itemCount={cartStore.itemCount}
+            itemCount={cartStore.items.reduce((sum, item) => sum + item.quantity, 0)}
             subtotal={subtotal}
             discount={discount}
             shippingAmount={shippingAmount}

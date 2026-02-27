@@ -111,7 +111,7 @@ export async function GET(request: NextRequest) {
       data: {
         cart: {
           id: cart.id,
-          items: itemsWithVariants,
+          items: cartItems,
         },
         itemCount,
         subtotal,
@@ -348,7 +348,7 @@ export async function POST(request: NextRequest) {
       data: {
         cart: {
           id: updatedCart!.id,
-          items: itemsWithVariants,
+          items: cartItems,
         },
         addedItem: cartItemWithVariant,
         itemCount,

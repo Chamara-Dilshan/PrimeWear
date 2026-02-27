@@ -51,7 +51,7 @@ async function getAuthenticatedUser(request: NextRequest): Promise<{
  */
 export async function GET(
   request: NextRequest,
-  { params }: { params: { orderId: string } }
+  { params }: { params: Promise<{ orderId: string }> }
 ) {
   try {
     const auth = await getAuthenticatedUser(request);
@@ -63,7 +63,7 @@ export async function GET(
       );
     }
 
-    const { orderId } = params;
+    const { orderId } = await params;
 
     // Fetch order with all related data
     const order = await prisma.order.findUnique({
@@ -100,14 +100,6 @@ export async function GET(
         statusHistory: {
           orderBy: {
             createdAt: "desc",
-          },
-          include: {
-            createdByUser: {
-              select: {
-                email: true,
-                role: true,
-              },
-            },
           },
         },
       },
@@ -229,12 +221,7 @@ export async function GET(
             status: history.status,
             note: history.note,
             createdAt: history.createdAt.toISOString(),
-            createdBy: history.createdBy
-              ? {
-                  email: history.createdByUser?.email || "System",
-                  role: history.createdByUser?.role || null,
-                }
-              : null,
+            createdBy: history.createdBy || null,
           })),
           // Action flags for UI (only meaningful for customers)
           actions: auth.role === UserRole.CUSTOMER ? actions : undefined,

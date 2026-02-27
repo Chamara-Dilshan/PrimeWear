@@ -28,7 +28,7 @@ async function requireAdmin(request: NextRequest): Promise<string | null> {
  */
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { orderId: string } }
+  { params }: { params: Promise<{ orderId: string }> }
 ) {
   try {
     const adminUserId = await requireAdmin(request);
@@ -40,7 +40,7 @@ export async function PATCH(
       );
     }
 
-    const { orderId } = params;
+    const { orderId } = await params;
 
     // Validate request body
     const body = await request.json();

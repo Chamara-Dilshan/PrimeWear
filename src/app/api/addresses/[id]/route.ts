@@ -30,7 +30,7 @@ async function requireCustomer(request: NextRequest): Promise<string | null> {
  */
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const customerId = await requireCustomer(request);
@@ -99,7 +99,7 @@ export async function PUT(
  */
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const customerId = await requireCustomer(request);

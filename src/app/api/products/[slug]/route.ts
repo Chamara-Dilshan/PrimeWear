@@ -15,6 +15,10 @@ export async function GET(
         isDisabledByAdmin: false,
       },
       include: {
+        images: {
+          select: { url: true, altText: true },
+          orderBy: { position: "asc" },
+        },
         category: {
           select: {
             id: true,
@@ -82,6 +86,11 @@ export async function GET(
         },
       },
       include: {
+        images: {
+          select: { url: true },
+          orderBy: { position: "asc" },
+          take: 1,
+        },
         category: {
           select: {
             id: true,
@@ -108,11 +117,19 @@ export async function GET(
       data: {
         product: {
           ...product,
+          price: product.price.toNumber(),
+          images: product.images.map((img) => img.url),
+          variants: product.variants.map((v) => ({
+            ...v,
+            priceAdjustment: v.priceAdjustment ? v.priceAdjustment.toNumber() : null,
+          })),
           averageRating: 0,
           reviewCount: 0,
         },
         relatedProducts: relatedProducts.map((p) => ({
           ...p,
+          price: p.price.toNumber(),
+          images: p.images.map((img) => img.url),
           averageRating: 0,
           reviewCount: 0,
         })),

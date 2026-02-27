@@ -35,7 +35,7 @@ export function ProductCard({ product }: ProductCardProps) {
     <Link href={`/products/${product.slug}`}>
       <Card className="group h-full overflow-hidden hover:shadow-lg transition-shadow">
         <div className="relative aspect-square overflow-hidden bg-gray-100">
-          {product.images[0] ? (
+          {product.images?.[0] ? (
             <Image
               src={product.images[0]}
               alt={product.name}

@@ -30,8 +30,7 @@ export function calculateVendorEarnings(
   orderItems: Array<{
     id: string;
     vendorId: string;
-    price: Decimal;
-    quantity: number;
+    totalPrice: Decimal;
     vendor: {
       id: string;
       businessName: string;
@@ -46,7 +45,7 @@ export function calculateVendorEarnings(
       vendorId: string;
       vendorName: string;
       commissionRate: Decimal;
-      items: Array<{ id: string; price: Decimal; quantity: number }>;
+      items: Array<{ id: string; totalPrice: Decimal }>;
     }
   >();
 
@@ -64,8 +63,7 @@ export function calculateVendorEarnings(
 
     vendorGroups.get(vendorId)!.items.push({
       id: item.id,
-      price: item.price,
-      quantity: item.quantity,
+      totalPrice: item.totalPrice,
     });
   }
 
@@ -73,10 +71,9 @@ export function calculateVendorEarnings(
   const vendorEarnings: VendorEarnings[] = [];
 
   for (const group of vendorGroups.values()) {
-    // Calculate total amount for this vendor
+    // Calculate total amount for this vendor (totalPrice already includes quantity)
     const totalAmount = group.items.reduce((sum, item) => {
-      const itemTotal = item.price.mul(item.quantity);
-      return sum.add(itemTotal);
+      return sum.add(item.totalPrice);
     }, new Decimal(0));
 
     // Calculate commission amount
@@ -270,10 +267,13 @@ export async function releaseVendorFunds(
       throw new Error(`Wallet not found for vendor ${vendorId}`);
     }
 
-    // Calculate net amount from items (commission already deducted during payment)
-    const netAmount = items.reduce((sum, item) => {
+    // Calculate net amount: gross total minus commission (matching creditVendorWallets logic)
+    const grossAmount = items.reduce((sum, item) => {
       return sum.add(item.totalPrice);
     }, new Decimal(0));
+    const commissionRate = items[0].vendor.commissionRate;
+    const commissionAmount = grossAmount.mul(commissionRate).div(100);
+    const netAmount = grossAmount.sub(commissionAmount);
 
     const currentPendingBalance = wallet.pendingBalance;
     const currentAvailableBalance = wallet.availableBalance;

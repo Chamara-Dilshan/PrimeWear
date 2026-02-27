@@ -28,7 +28,7 @@ async function requireCustomer(request: NextRequest): Promise<string | null> {
  */
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { itemId: string } }
+  { params }: { params: Promise<{ itemId: string }> }
 ) {
   try {
     const customerId = await requireCustomer(request);
@@ -40,7 +40,7 @@ export async function PUT(
       );
     }
 
-    const { itemId } = params;
+    const { itemId } = await params;
 
     // Find cart item and verify it belongs to customer
     const cartItem = await prisma.cartItem.findUnique({
@@ -164,7 +164,7 @@ export async function PUT(
       data: {
         cart: {
           id: updatedCart!.id,
-          items: itemsWithVariants,
+          items: cartItems,
         },
         itemCount,
         subtotal,
@@ -185,7 +185,7 @@ export async function PUT(
  */
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { itemId: string } }
+  { params }: { params: Promise<{ itemId: string }> }
 ) {
   try {
     const customerId = await requireCustomer(request);
@@ -197,7 +197,7 @@ export async function DELETE(
       );
     }
 
-    const { itemId } = params;
+    const { itemId } = await params;
 
     // Find cart item and verify it belongs to customer
     const cartItem = await prisma.cartItem.findUnique({
@@ -272,7 +272,7 @@ export async function DELETE(
       data: {
         cart: {
           id: updatedCart!.id,
-          items: itemsWithVariants,
+          items: cartItems,
         },
         itemCount,
         subtotal,

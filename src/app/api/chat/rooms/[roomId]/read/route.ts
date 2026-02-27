@@ -14,10 +14,10 @@ import { prisma } from '@/lib/prisma';
  */
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { roomId: string } }
+  { params }: { params: Promise<{ roomId: string }> }
 ) {
   try {
-    const { roomId } = params;
+    const { roomId } = await params;
 
     // Get user info from middleware headers
     const userId = request.headers.get('X-User-Id');

@@ -9,7 +9,7 @@ import { requireAuth, handleAuthError } from "@/lib/auth-helpers";
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const user = requireAuth(request);

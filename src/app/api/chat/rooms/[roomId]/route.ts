@@ -13,10 +13,10 @@ import { verifyRoomAccess } from '@/lib/chat/accessControl';
  */
 export async function GET(
   request: NextRequest,
-  { params }: { params: { roomId: string } }
+  { params }: { params: Promise<{ roomId: string }> }
 ) {
   try {
-    const { roomId } = params;
+    const { roomId } = await params;
 
     // Get user info from middleware headers
     const userId = request.headers.get('X-User-Id');

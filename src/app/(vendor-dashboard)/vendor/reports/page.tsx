@@ -7,6 +7,7 @@ import { VendorOrderDistribution } from "@/components/vendor/reports/VendorOrder
 import { VendorTopProducts } from "@/components/vendor/reports/VendorTopProducts";
 import { VendorEarningsBreakdown } from "@/components/vendor/reports/VendorEarningsBreakdown";
 import { DateRangeSelector } from "@/components/reports/DateRangeSelector";
+import { ExportButton } from "@/components/reports/ExportButton";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
@@ -38,17 +39,36 @@ export default function VendorReportsPage() {
   const dateFromStr = formatDateForAPI(dateFrom);
   const dateToStr = formatDateForAPI(dateTo);
 
+  const handleExport = async () => {
+    const response = await fetch("/api/vendor/reports/export", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ reportType: "sales", filters: { dateFrom: dateFromStr, dateTo: dateToStr } }),
+    });
+    if (!response.ok) throw new Error("Export failed");
+    const blob = await response.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `vendor-report-${dateFromStr}-${dateToStr}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div>
-        <div className="flex items-center gap-2 mb-2">
-          <BarChart3 className="h-8 w-8 text-primary" />
-          <h1 className="text-3xl font-bold">Sales Reports & Analytics</h1>
+      <div className="flex items-start justify-between">
+        <div>
+          <div className="flex items-center gap-2 mb-2">
+            <BarChart3 className="h-8 w-8 text-primary" />
+            <h1 className="text-3xl font-bold">Sales Reports & Analytics</h1>
+          </div>
+          <p className="text-muted-foreground">
+            Track your sales performance and business insights
+          </p>
         </div>
-        <p className="text-muted-foreground">
-          Track your sales performance and business insights
-        </p>
+        <ExportButton onExport={handleExport} filename="vendor-report" />
       </div>
 
       {/* Filters */}

@@ -7,21 +7,13 @@ import {
   CartResponse,
   MergeCartResponse,
 } from "@/types/cart";
-import {
-  generateCartItemId,
-  calculateCartTotals,
-  convertDbCartItems,
-} from "@/lib/utils/cart";
+import { generateCartItemId } from "@/lib/utils/cart";
 
 interface CartState {
   // State
   items: CartItem[];
   isLoading: boolean;
   error: string | null;
-
-  // Computed values
-  get itemCount(): number;
-  get subtotal(): number;
 
   // Guest cart actions (localStorage)
   addToGuestCart: (item: CartItem) => void;
@@ -55,20 +47,6 @@ export const useCartStore = create<CartState>()(
       items: [],
       isLoading: false,
       error: null,
-
-      // Computed values
-      get itemCount() {
-        const { items } = get();
-        return items.reduce((sum, item) => sum + item.quantity, 0);
-      },
-
-      get subtotal() {
-        const { items } = get();
-        return items.reduce(
-          (sum, item) => sum + item.finalPrice * item.quantity,
-          0
-        );
-      },
 
       // Guest cart actions
       addToGuestCart: (item) => {
@@ -142,8 +120,7 @@ export const useCartStore = create<CartState>()(
           const data: CartResponse = await response.json();
 
           if (data.success && data.data) {
-            const cartItems = convertDbCartItems(data.data.cart.items as any);
-            set({ items: cartItems, isLoading: false });
+            set({ items: data.data.cart.items as any, isLoading: false });
           } else {
             set({ error: data.error || "Failed to fetch cart", isLoading: false });
           }
@@ -172,8 +149,7 @@ export const useCartStore = create<CartState>()(
           const data: AddToCartResponse = await response.json();
 
           if (data.success && data.data) {
-            const cartItems = convertDbCartItems(data.data.cart.items as any);
-            set({ items: cartItems, isLoading: false });
+            set({ items: data.data.cart.items as any, isLoading: false });
             return true;
           } else {
             // Rollback
@@ -223,8 +199,7 @@ export const useCartStore = create<CartState>()(
           const data: CartResponse = await response.json();
 
           if (data.success && data.data) {
-            const cartItems = convertDbCartItems(data.data.cart.items as any);
-            set({ items: cartItems, isLoading: false });
+            set({ items: data.data.cart.items as any, isLoading: false });
           } else {
             // Rollback
             set({
@@ -260,8 +235,7 @@ export const useCartStore = create<CartState>()(
           const data: CartResponse = await response.json();
 
           if (data.success && data.data) {
-            const cartItems = convertDbCartItems(data.data.cart.items as any);
-            set({ items: cartItems, isLoading: false });
+            set({ items: data.data.cart.items as any, isLoading: false });
           } else {
             // Rollback
             set({
@@ -335,8 +309,7 @@ export const useCartStore = create<CartState>()(
           const data: MergeCartResponse = await response.json();
 
           if (data.success && data.data) {
-            const cartItems = convertDbCartItems(data.data.cart.items as any);
-            set({ items: cartItems, isLoading: false });
+            set({ items: data.data.cart.items as any, isLoading: false });
 
             // Log merge stats
             console.log("Cart merged:", data.data.merged);

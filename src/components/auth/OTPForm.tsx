@@ -31,7 +31,8 @@ interface OTPFormProps {
 export function OTPForm({ redirectUrl }: OTPFormProps) {
   const router = useRouter();
   const { setAuth } = useAuthStore();
-  const { mergeGuestCart, itemCount } = useCartStore();
+  const { mergeGuestCart, items: cartItems } = useCartStore();
+  const itemCount = cartItems.reduce((sum, item) => sum + item.quantity, 0);
   const [step, setStep] = useState<"email" | "otp">("email");
   const [email, setEmail] = useState("");
   const [isLoading, setIsLoading] = useState(false);

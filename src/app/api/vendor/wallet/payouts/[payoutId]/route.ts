@@ -13,13 +13,13 @@ import { prisma } from "@/lib/prisma";
  */
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { payoutId: string } }
+  { params }: { params: Promise<{ payoutId: string }> }
 ) {
   try {
     // Auth check
     const user = requireVendor(request);
 
-    const { payoutId } = params;
+    const { payoutId } = await params;
 
     // Get wallet
     const wallet = await prisma.wallet.findUnique({

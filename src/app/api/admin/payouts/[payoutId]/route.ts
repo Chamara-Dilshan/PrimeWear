@@ -15,13 +15,13 @@ import { prisma } from "@/lib/prisma";
  */
 export async function GET(
   request: NextRequest,
-  { params }: { params: { payoutId: string } }
+  { params }: { params: Promise<{ payoutId: string }> }
 ) {
   try {
     // Auth check
     requireAdmin(request);
 
-    const { payoutId } = params;
+    const { payoutId } = await params;
 
     // Fetch payout with vendor and wallet information
     const payout = await prisma.payout.findUnique({

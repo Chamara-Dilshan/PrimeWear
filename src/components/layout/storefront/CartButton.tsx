@@ -10,7 +10,8 @@ import { useAuthStore } from "@/stores/authStore";
 
 export function CartButton() {
   const { isAuthenticated, user } = useAuthStore();
-  const { itemCount, fetchCart } = useCartStore();
+  const { items, fetchCart } = useCartStore();
+  const itemCount = items.reduce((sum, item) => sum + item.quantity, 0);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
   const isCustomer = isAuthenticated && user?.role === "CUSTOMER";

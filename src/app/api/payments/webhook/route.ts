@@ -81,6 +81,13 @@ export async function POST(request: NextRequest) {
       where: { orderNumber: webhookData.order_id },
       include: {
         payment: true,
+        customer: {
+          include: {
+            user: {
+              select: { id: true },
+            },
+          },
+        },
         items: {
           include: {
             vendor: {
@@ -181,36 +188,7 @@ export async function POST(request: NextRequest) {
             new_status: newOrderStatus,
           });
 
-          // Create chat rooms for PAYMENT_CONFIRMED orders
-          if (newOrderStatus === "PAYMENT_CONFIRMED") {
-            try {
-              console.log("[PayHere Webhook] Creating chat rooms for order:", order.id);
-              await createChatRoomsForOrder(order.id);
-              console.log("[PayHere Webhook] Chat rooms created successfully");
-            } catch (chatError) {
-              // Log error but don't fail the payment processing
-              console.error("[PayHere Webhook] Failed to create chat rooms:", chatError);
-            }
-
-            // Send notification to customer
-            try {
-              await createNotification({
-                userId: order.userId,
-                type: NotificationType.ORDER_PAYMENT_CONFIRMED,
-                title: "Payment Confirmed",
-                message: `Your payment for order ${order.orderNumber} has been processed successfully.`,
-                link: `/orders/${order.id}`,
-                metadata: {
-                  orderId: order.id,
-                  orderNumber: order.orderNumber,
-                  amount: order.total.toNumber(),
-                },
-              });
-            } catch (notifError) {
-              // Non-blocking: log but don't fail payment processing
-              console.error("[PayHere Webhook] Failed to send notification:", notifError);
-            }
-          }
+          // (Post-transaction side effects handled after the transaction below)
         }
 
         // If payment successful, credit vendor wallets
@@ -242,6 +220,36 @@ export async function POST(request: NextRequest) {
         timeout: 30000, // 30 second timeout for long transactions
       }
     );
+
+    // Post-transaction side effects for PAYMENT_CONFIRMED
+    if (paymentStatus === "COMPLETED" && order.status === "PENDING_PAYMENT") {
+      // Create chat rooms (after transaction commits so order status is PAYMENT_CONFIRMED)
+      try {
+        console.log("[PayHere Webhook] Creating chat rooms for order:", order.id);
+        await createChatRoomsForOrder(order.id);
+        console.log("[PayHere Webhook] Chat rooms created successfully");
+      } catch (chatError) {
+        console.error("[PayHere Webhook] Failed to create chat rooms:", chatError);
+      }
+
+      // Send notification to customer
+      try {
+        await createNotification({
+          userId: order.customer.user.id,
+          type: NotificationType.ORDER_PAYMENT_CONFIRMED,
+          title: "Payment Confirmed",
+          message: `Your payment for order ${order.orderNumber} has been processed successfully.`,
+          link: `/orders/${order.id}`,
+          metadata: {
+            orderId: order.id,
+            orderNumber: order.orderNumber,
+            amount: order.totalAmount.toNumber(),
+          },
+        });
+      } catch (notifError) {
+        console.error("[PayHere Webhook] Failed to send notification:", notifError);
+      }
+    }
 
     console.log("[PayHere Webhook] Processing completed successfully:", {
       order_id: webhookData.order_id,
