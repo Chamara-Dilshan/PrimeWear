@@ -49,12 +49,21 @@ export default function Home() {
   return (
     <div className="flex flex-col">
       {/* Hero Section */}
-      <section className="bg-gradient-to-b from-primary/10 to-background py-12 md:py-20 px-4">
-        <div className="container mx-auto text-center">
-          <h1 className="text-3xl md:text-6xl font-bold mb-4 md:mb-6">
+      <section className="relative h-[420px] md:h-[520px] overflow-hidden">
+        <Image
+          src="/hero-banner.jpg"
+          alt="PrimeWear Hero Banner"
+          fill
+          sizes="100vw"
+          className="object-cover"
+          priority
+        />
+        <div className="absolute inset-0 bg-black/45" />
+        <div className="relative z-10 h-full flex flex-col items-center justify-center text-center px-4">
+          <h1 className="text-3xl md:text-6xl font-bold mb-4 md:mb-6 text-white">
             Welcome to PrimeWear
           </h1>
-          <p className="text-base md:text-xl text-muted-foreground mb-6 md:mb-8 max-w-2xl mx-auto">
+          <p className="text-base md:text-xl text-white/85 mb-6 md:mb-8 max-w-2xl mx-auto">
             Sri Lanka&apos;s premier multi-vendor e-commerce platform. Shop from
             trusted vendors with secure escrow payments.
           </p>
