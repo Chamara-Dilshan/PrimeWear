@@ -34,9 +34,7 @@ export default function Home() {
         const categoriesResponse = await fetch("/api/categories");
         const categoriesData = await categoriesResponse.json();
         if (categoriesData.success && categoriesData.data.categories) {
-          // Get only parent categories
-          const parentCategories = categoriesData.data.categories.filter((cat: any) => !cat.parentId);
-          setCategories(parentCategories.slice(0, 6)); // Show first 6 parent categories
+          setCategories(categoriesData.data.categories.slice(0, 6)); // Show first 6 active categories
         }
       } catch (error) {
         console.error("Error fetching homepage data:", error);
@@ -77,7 +75,7 @@ export default function Home() {
           <div className="flex items-center justify-between gap-2 mb-6 md:mb-8">
             <h2 className="text-2xl md:text-3xl font-bold">Shop by Category</h2>
             <Button variant="ghost" asChild>
-              <Link href="/products">
+              <Link href="/categories">
                 View All
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Link>
@@ -106,6 +104,7 @@ export default function Home() {
                         src={category.image}
                         alt={category.name}
                         fill
+                        sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, (max-width: 1024px) 25vw, 17vw"
                         className="object-cover group-hover:scale-105 transition-transform"
                       />
                     ) : (

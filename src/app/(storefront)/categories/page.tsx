@@ -112,6 +112,7 @@ export default function CategoriesPage() {
                       src={category.image}
                       alt={category.name}
                       fill
+                      sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
                       className="object-cover group-hover:scale-105 transition-transform duration-200"
                     />
                   ) : (
