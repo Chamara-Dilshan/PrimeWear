@@ -125,6 +125,9 @@ export async function GET(
             slug: true,
           },
         },
+        variants: {
+          select: { priceAdjustment: true, stock: true },
+        },
       },
       take: 6,
       orderBy: {
@@ -160,13 +163,26 @@ export async function GET(
             },
           })),
         },
-        relatedProducts: relatedProducts.map((p) => ({
-          ...p,
-          price: p.price.toNumber(),
-          images: p.images.map((img) => img.url),
-          averageRating: 0,
-          reviewCount: 0,
-        })),
+        relatedProducts: relatedProducts.map((p) => {
+          const basePrice = p.price.toNumber();
+          const hasVariants = p.variants.length > 0;
+          const displayPrice = hasVariants
+            ? Math.min(...p.variants.map((v) => basePrice + (v.priceAdjustment ? v.priceAdjustment.toNumber() : 0)))
+            : basePrice;
+          const totalStock = hasVariants
+            ? p.variants.reduce((sum, v) => sum + v.stock, 0)
+            : p.stock;
+          return {
+            ...p,
+            price: basePrice,
+            displayPrice,
+            totalStock,
+            images: p.images.map((img) => img.url),
+            variants: undefined,
+            averageRating: 0,
+            reviewCount: 0,
+          };
+        }),
       },
     });
   } catch (error) {
