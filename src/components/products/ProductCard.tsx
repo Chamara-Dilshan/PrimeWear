@@ -12,6 +12,8 @@ interface ProductCardProps {
     name: string;
     slug: string;
     price: number;
+    displayPrice?: number;  // min absolute variant price (from API)
+    totalStock?: number;    // summed variant stock (from API)
     images: string[];
     stock: number;
     averageRating?: number;
@@ -28,8 +30,10 @@ interface ProductCardProps {
 }
 
 export function ProductCard({ product }: ProductCardProps) {
-  const isOutOfStock = product.stock === 0;
-  const isLowStock = product.stock > 0 && product.stock <= 5;
+  const shownPrice = product.displayPrice ?? product.price;
+  const effectiveStock = product.totalStock ?? product.stock;
+  const isOutOfStock = effectiveStock === 0;
+  const isLowStock = effectiveStock > 0 && effectiveStock <= 5;
 
   return (
     <Link href={`/products/${product.slug}`}>
@@ -99,7 +103,7 @@ export function ProductCard({ product }: ProductCardProps) {
           {/* Price */}
           <div className="flex items-center justify-between">
             <p className="text-lg font-bold">
-              Rs. {product.price.toLocaleString("en-LK")}
+              Rs. {shownPrice.toLocaleString("en-LK")}
             </p>
           </div>
 

@@ -7,24 +7,17 @@ import { ProductImageGallery } from "@/components/products/ProductImageGallery";
 import { ProductGrid } from "@/components/products/ProductGrid";
 import { AddToCartButton } from "@/components/cart/AddToCartButton";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Star, Store, ChevronRight, Package } from "lucide-react";
 import { toast } from "sonner";
-
-interface Variant {
-  id: string;
-  name: string;
-  values: string[];
-}
-
 interface ProductVariant {
   id: string;
-  sku: string;
-  price: number;
+  sku: string | null;
+  priceAdjustment: number | null;
   stock: number;
-  options: Record<string, string>;
+  name: string;
+  value: string;
 }
 
 interface Review {
@@ -78,9 +71,7 @@ export default function ProductDetailPage() {
   const [product, setProduct] = useState<Product | null>(null);
   const [relatedProducts, setRelatedProducts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedVariant, setSelectedVariant] = useState<ProductVariant | null>(null);
-  const [selectedOptions, setSelectedOptions] = useState<Record<string, string>>({});
-  const [quantity, setQuantity] = useState(1);
+  const [activeVariant, setActiveVariant] = useState<ProductVariant | null>(null);
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -106,49 +97,24 @@ export default function ProductDetailPage() {
     fetchProduct();
   }, [slug]);
 
-  // Extract variant options
-  const variantOptions: Record<string, string[]> = {};
-  if (product?.variants && product.variants.length > 0) {
-    product.variants.forEach((variant) => {
-      Object.entries(variant.options).forEach(([key, value]) => {
-        if (!variantOptions[key]) {
-          variantOptions[key] = [];
-        }
-        if (!variantOptions[key].includes(value)) {
-          variantOptions[key].push(value);
-        }
-      });
-    });
-  }
+  const hasVariants = (product?.variants?.length ?? 0) > 0;
 
-  // Find matching variant based on selected options
-  useEffect(() => {
-    if (product?.variants && Object.keys(selectedOptions).length > 0) {
-      const matchingVariant = product.variants.find((variant) => {
-        return Object.entries(selectedOptions).every(
-          ([key, value]) => variant.options[key] === value
-        );
-      });
-      setSelectedVariant(matchingVariant || null);
-    }
-  }, [selectedOptions, product]);
+  // When a variant is selected show its absolute price; otherwise show the lowest variant price
+  const minVariantPrice = hasVariants && product
+    ? Math.min(...product.variants.map((v) => product.price + (v.priceAdjustment ?? 0)))
+    : product?.price ?? 0;
+  const displayPrice = activeVariant
+    ? (product?.price ?? 0) + (activeVariant.priceAdjustment ?? 0)
+    : minVariantPrice;
 
-  const handleOptionChange = (optionName: string, value: string) => {
-    setSelectedOptions((prev) => ({
-      ...prev,
-      [optionName]: value,
-    }));
-  };
-
-  const handleAddToCart = () => {
-    // This will be implemented in Phase 7
-    toast.info("Cart functionality coming soon!");
-  };
-
-  const currentPrice = selectedVariant?.price || product?.price || 0;
-  const currentStock = selectedVariant?.stock || product?.stock || 0;
-  const isOutOfStock = currentStock === 0;
-  const isLowStock = currentStock > 0 && currentStock <= 5;
+  // For variant products: total stock across all variants; for simple products: base stock
+  const totalVariantStock = hasVariants
+    ? (product?.variants ?? []).reduce((sum, v) => sum + v.stock, 0)
+    : 0;
+  const isOutOfStock = hasVariants ? totalVariantStock === 0 : (product?.stock ?? 0) === 0;
+  const isLowStock = !isOutOfStock && (hasVariants
+    ? totalVariantStock <= 5
+    : (product?.stock ?? 0) <= 5);
 
   if (loading) {
     return (
@@ -237,14 +203,12 @@ export default function ProductDetailPage() {
 
             {/* Price */}
             <div className="flex items-baseline gap-2 mb-4">
-              <span className="text-3xl font-bold">
-                Rs. {currentPrice.toLocaleString("en-LK")}
-              </span>
-              {selectedVariant && selectedVariant.price !== product.price && (
-                <span className="text-lg text-muted-foreground line-through">
-                  Rs. {product.price.toLocaleString("en-LK")}
-                </span>
+              {hasVariants && !activeVariant && (
+                <span className="text-lg text-muted-foreground">From</span>
               )}
+              <span className="text-3xl font-bold">
+                Rs. {displayPrice.toLocaleString("en-LK")}
+              </span>
             </div>
 
             {/* Stock Status */}
@@ -252,7 +216,7 @@ export default function ProductDetailPage() {
               <Badge variant="destructive">Out of Stock</Badge>
             ) : isLowStock ? (
               <Badge variant="secondary" className="bg-orange-500 text-white">
-                Only {currentStock} left!
+                Low Stock
               </Badge>
             ) : (
               <Badge variant="secondary" className="bg-green-500 text-white">
@@ -278,33 +242,7 @@ export default function ProductDetailPage() {
 
           <Separator />
 
-          {/* Variant Selection */}
-          {Object.keys(variantOptions).length > 0 && (
-            <div className="space-y-4">
-              {Object.entries(variantOptions).map(([optionName, values]) => (
-                <div key={optionName}>
-                  <Label className="mb-2 block capitalize">{optionName}</Label>
-                  <Select
-                    value={selectedOptions[optionName] || ""}
-                    onValueChange={(value) => handleOptionChange(optionName, value)}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder={`Select ${optionName}`} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {values.map((value) => (
-                        <SelectItem key={value} value={value}>
-                          {value}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              ))}
-            </div>
-          )}
-
-          {/* Add to Cart */}
+          {/* Add to Cart (includes variant selector internally) */}
           <AddToCartButton
             product={{
               id: product.id,
@@ -327,6 +265,7 @@ export default function ProductDetailPage() {
             }))}
             size="lg"
             showQuantitySelector={true}
+            onVariantChange={setActiveVariant}
           />
 
           <Separator />

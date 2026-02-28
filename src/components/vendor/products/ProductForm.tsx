@@ -112,6 +112,41 @@ export function ProductForm({ mode, initialData, onSuccess }: ProductFormProps) 
     form.setValue("variants", newVariants, { shouldDirty: true });
   };
 
+  // Intercept form submission so we can derive the base price from variants
+  // at submit time — NOT during typing (which caused premature wrong prices).
+  const handleFormSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+
+    if (variantSettings.hasVariants && variants.length > 0) {
+      const currentBase = form.getValues("price") || 0;
+      if (currentBase < 0.01) {
+        // priceAdjustment was computed with basePrice=0, so it equals the absolute price
+        const absolutePrices = variants.map((v) => v.priceAdjustment ?? 0);
+        const minAbsolutePrice = Math.min(...absolutePrices);
+
+        if (minAbsolutePrice < 0.01) {
+          toast({
+            variant: "destructive",
+            title: "Validation Error",
+            description: "Variant prices must be at least Rs. 0.01",
+          });
+          return;
+        }
+
+        // Set base price = lowest variant price, recompute adjustments relative to it
+        form.setValue("price", minAbsolutePrice, { shouldValidate: false });
+        const adjustedVariants = variants.map((v, i) => ({
+          ...v,
+          priceAdjustment: absolutePrices[i] - minAbsolutePrice,
+        }));
+        setVariants(adjustedVariants);
+        form.setValue("variants", adjustedVariants, { shouldValidate: false });
+      }
+    }
+
+    form.handleSubmit(onSubmit)();
+  };
+
   const onSubmit = async (data: ProductFormData) => {
     // Validate images
     if (images.length === 0) {
@@ -194,7 +229,7 @@ export function ProductForm({ mode, initialData, onSuccess }: ProductFormProps) 
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+      <form onSubmit={handleFormSubmit} className="space-y-8">
         {/* Basic Information Section */}
         <div className="space-y-6">
           <div>

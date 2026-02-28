@@ -108,6 +108,9 @@ export async function GET(request: NextRequest) {
               },
             },
           },
+          variants: {
+            select: { priceAdjustment: true, stock: true },
+          },
         },
         orderBy,
         skip,
@@ -116,14 +119,29 @@ export async function GET(request: NextRequest) {
       prisma.product.count({ where }),
     ]);
 
-    // Add rating placeholders (reviews not implemented yet) and flatten images to string[]
-    const productsWithRatings = products.map((product) => ({
-      ...product,
-      price: product.price.toNumber(),
-      images: product.images.map((img) => img.url),
-      averageRating: 0,
-      reviewCount: 0,
-    }));
+    // Flatten images, compute display price and total stock for variant products
+    const productsWithRatings = products.map((product) => {
+      const basePrice = product.price.toNumber();
+      const hasVariants = product.variants.length > 0;
+      // Minimum absolute price across all variants
+      const displayPrice = hasVariants
+        ? Math.min(...product.variants.map((v) => basePrice + (v.priceAdjustment ? v.priceAdjustment.toNumber() : 0)))
+        : basePrice;
+      // Total stock across all variants (or base stock for simple products)
+      const totalStock = hasVariants
+        ? product.variants.reduce((sum, v) => sum + v.stock, 0)
+        : product.stock;
+      return {
+        ...product,
+        price: basePrice,
+        displayPrice,
+        totalStock,
+        images: product.images.map((img) => img.url),
+        variants: undefined, // don't expose raw variants to card
+        averageRating: 0,
+        reviewCount: 0,
+      };
+    });
 
     const totalPages = Math.ceil(total / limit);
 

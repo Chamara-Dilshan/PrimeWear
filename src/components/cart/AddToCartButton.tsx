@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useCartStore } from "@/stores/cartStore";
 import { useAuthStore } from "@/stores/authStore";
 import { Button } from "@/components/ui/button";
@@ -41,6 +41,7 @@ interface AddToCartButtonProps {
   variants?: ProductVariant[];
   size?: "sm" | "md" | "lg";
   showQuantitySelector?: boolean;
+  onVariantChange?: (variant: ProductVariant | null) => void;
 }
 
 export function AddToCartButton({
@@ -48,6 +49,7 @@ export function AddToCartButton({
   variants = [],
   size = "lg",
   showQuantitySelector = true,
+  onVariantChange,
 }: AddToCartButtonProps) {
   const { isAuthenticated } = useAuthStore();
   const { addToGuestCart, addToCart, getItemQuantity } = useCartStore();
@@ -65,6 +67,11 @@ export function AddToCartButton({
   const selectedVariant = hasVariants
     ? variants.find((v) => v.id === selectedVariantId)
     : null;
+
+  useEffect(() => {
+    onVariantChange?.(selectedVariant ?? null);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedVariantId]);
 
   const availableStock = selectedVariant
     ? selectedVariant.stock
@@ -176,31 +183,31 @@ export function AddToCartButton({
               <SelectValue placeholder={`Choose ${variants[0]?.name || "variant"}`} />
             </SelectTrigger>
             <SelectContent>
-              {variants.map((variant) => (
-                <SelectItem
-                  key={variant.id}
-                  value={variant.id}
-                  disabled={variant.stock === 0}
-                >
-                  {variant.value}
-                  {variant.priceAdjustment && variant.priceAdjustment !== 0 && (
+              {variants.map((variant) => {
+                const absolutePrice = product.price + (variant.priceAdjustment ?? 0);
+                return (
+                  <SelectItem
+                    key={variant.id}
+                    value={variant.id}
+                    disabled={variant.stock === 0}
+                  >
+                    {variant.value}
                     <span className="text-muted-foreground ml-2">
-                      ({variant.priceAdjustment > 0 ? "+" : ""}
-                      Rs. {variant.priceAdjustment})
+                      — Rs. {absolutePrice.toLocaleString("en-LK")}
                     </span>
-                  )}
-                  {variant.stock === 0 && (
-                    <span className="text-red-500 ml-2">(Out of stock)</span>
-                  )}
-                </SelectItem>
-              ))}
+                    {variant.stock === 0 && (
+                      <span className="text-red-500 ml-2">(Out of stock)</span>
+                    )}
+                  </SelectItem>
+                );
+              })}
             </SelectContent>
           </Select>
         </div>
       )}
 
-      {/* Stock Info */}
-      {availableStock === 0 && (
+      {/* Stock Info — only show after a variant is selected (or when no variants) */}
+      {(!hasVariants || selectedVariantId !== null) && availableStock === 0 && (
         <div className="text-sm text-red-600 font-medium">Out of stock</div>
       )}
 

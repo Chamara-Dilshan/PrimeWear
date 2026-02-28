@@ -129,14 +129,6 @@ export default function VendorsPage() {
                       </span>
                     </div>
                   )}
-                  <div className="mt-4 pt-4 border-t">
-                    <p className="text-sm text-muted-foreground">
-                      Platform Commission:{" "}
-                      <span className="font-medium text-foreground">
-                        {vendor.commissionRate}%
-                      </span>
-                    </p>
-                  </div>
                 </CardContent>
               </Card>
             </Link>
