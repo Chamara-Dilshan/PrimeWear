@@ -4,12 +4,8 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { UserRole } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
-
-/**
- * Require admin role
- */
+import { requireAdmin, handleAuthError } from '@/lib/auth-helpers';
 
 
 /**
@@ -22,7 +18,7 @@ export async function GET(request: NextRequest) {
   try {
     // Check admin authorization
     // Auth check
-    const user = requireAdmin(request);
+    requireAdmin(request);
 
         // Parse query parameters
     const searchParams = request.nextUrl.searchParams;

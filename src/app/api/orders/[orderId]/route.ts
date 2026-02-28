@@ -84,6 +84,9 @@ export async function GET(
                 businessName: true,
               },
             },
+            chatRoom: {
+              select: { id: true },
+            },
           },
           orderBy: {
             createdAt: "asc",
@@ -143,6 +146,19 @@ export async function GET(
       deliveryConfirmedAt: order.deliveryConfirmedAt,
     });
 
+    // Fetch existing reviews for this customer's order items (customers only)
+    let reviewMap: Record<string, { id: string; rating: number; comment: string | null }> = {};
+    if (auth.role === UserRole.CUSTOMER) {
+      const reviews = await prisma.productReview.findMany({
+        where: { orderItemId: { in: order.items.map((i) => i.id) } },
+        select: { id: true, orderItemId: true, rating: true, comment: true },
+      });
+      reviewMap = reviews.reduce(
+        (acc, r) => ({ ...acc, [r.orderItemId]: { id: r.id, rating: r.rating, comment: r.comment } }),
+        {} as Record<string, { id: string; rating: number; comment: string | null }>
+      );
+    }
+
     // Group items by vendor
     const itemsByVendor = order.items.reduce((acc, item) => {
       const vendorId = item.vendorId;
@@ -156,6 +172,7 @@ export async function GET(
           trackingNumber: item.trackingNumber,
           trackingUrl: item.trackingUrl,
           shippedAt: item.shippedAt?.toISOString() || null,
+          chatRoomId: item.chatRoom?.id || null,
         };
       }
       acc[vendorId].items.push({
@@ -166,6 +183,8 @@ export async function GET(
         quantity: item.quantity,
         totalPrice: item.totalPrice.toNumber(),
         status: item.status,
+        chatRoomId: item.chatRoom?.id || null,
+        review: reviewMap[item.id] || null,
       });
       return acc;
     }, {} as Record<string, any>);
@@ -202,6 +221,7 @@ export async function GET(
             trackingNumber: item.trackingNumber,
             trackingUrl: item.trackingUrl,
             shippedAt: item.shippedAt?.toISOString() || null,
+            chatRoomId: item.chatRoom?.id || null,
             vendor: {
               id: item.vendor.id,
               businessName: item.vendor.businessName,

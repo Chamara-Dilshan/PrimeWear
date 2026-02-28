@@ -13,11 +13,12 @@ import { format } from "date-fns";
 import { ArrowLeft, MapPin, Package } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { MessageCustomerButton } from "@/components/chat/MessageCustomerButton";
 
 interface VendorOrderDetailsPageProps {
-  params: {
+  params: Promise<{
     orderId: string;
-  };
+  }>;
 }
 
 async function getVendorOrderDetails(orderId: string) {
@@ -55,7 +56,7 @@ async function getVendorOrderDetails(orderId: string) {
 export default async function VendorOrderDetailsPage({
   params,
 }: VendorOrderDetailsPageProps) {
-  const { orderId } = params;
+  const { orderId } = await params;
   const data = await getVendorOrderDetails(orderId);
 
   if (!data) {
@@ -154,6 +155,13 @@ export default async function VendorOrderDetailsPage({
                           Track shipment →
                         </a>
                       )}
+                    </div>
+                  )}
+
+                  {/* Chat with Customer */}
+                  {item.chatRoomId && (
+                    <div className="pt-2">
+                      <MessageCustomerButton chatRoomId={item.chatRoomId} />
                     </div>
                   )}
 

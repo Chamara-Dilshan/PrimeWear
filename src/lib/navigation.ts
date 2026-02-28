@@ -16,6 +16,7 @@ import {
   Bell,
   ShoppingBag,
   Percent,
+  MessageSquare,
 } from "lucide-react";
 
 export interface NavItem {
@@ -71,6 +72,16 @@ export const adminNavItems: NavItem[] = [
     label: "Notifications",
     href: "/admin/notifications",
     icon: Bell,
+  },
+  {
+    label: "Chat Oversight",
+    href: "/admin/chat",
+    icon: MessageSquare,
+  },
+  {
+    label: "Reviews",
+    href: "/admin/reviews",
+    icon: Star,
   },
   {
     label: "Reports",

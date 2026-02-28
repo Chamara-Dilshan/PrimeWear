@@ -36,6 +36,7 @@ const protectedRoutes: Record<string, Role[]> = {
   "/api/checkout": ["CUSTOMER"],
   "/api/orders": ["CUSTOMER", "ADMIN"],
   "/api/disputes": ["CUSTOMER"],
+  "/api/reviews": ["CUSTOMER"],
   "/api/payments/initiate": ["CUSTOMER"],
   "/api/coupons": ["CUSTOMER"],
   // ── Shared API routes ─────────────────────────────────────────────────────

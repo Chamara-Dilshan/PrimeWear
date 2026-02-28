@@ -20,6 +20,7 @@ import {
   Shield,
   User,
   Wallet,
+  Truck,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -36,6 +37,30 @@ export default function AdminOrderDetailsPage({
   const [orderData, setOrderData] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [overrideDialogOpen, setOverrideDialogOpen] = useState(false);
+  const [isMarkingDelivered, setIsMarkingDelivered] = useState(false);
+
+  const handleMarkDelivered = async () => {
+    if (!orderData) return;
+    setIsMarkingDelivered(true);
+    try {
+      const res = await fetch(`/api/admin/orders/${orderData.order.id}/status`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          status: "DELIVERED",
+          reason: "Admin confirmed package delivery",
+        }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        fetchOrderDetails();
+      }
+    } catch (err) {
+      console.error("Failed to mark as delivered:", err);
+    } finally {
+      setIsMarkingDelivered(false);
+    }
+  };
 
   useEffect(() => {
     fetchOrderDetails();
@@ -104,6 +129,18 @@ export default function AdminOrderDetailsPage({
           </div>
           <div className="flex items-center gap-2">
             <OrderStatusBadge status={order.status} />
+            {order.status === "SHIPPED" && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleMarkDelivered}
+                disabled={isMarkingDelivered}
+                className="border-blue-500 text-blue-600 hover:bg-blue-50"
+              >
+                <Truck className="w-4 h-4 mr-2" />
+                {isMarkingDelivered ? "Marking..." : "Mark as Delivered"}
+              </Button>
+            )}
             <Button
               variant="outline"
               size="sm"

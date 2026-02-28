@@ -195,10 +195,10 @@ export function validateStatusTransition(
     }
 
     if (newStatus === "DELIVERY_CONFIRMED") {
-      if (currentStatus !== "DELIVERED") {
+      if (!["SHIPPED", "DELIVERED"].includes(currentStatus)) {
         return {
           isValid: false,
-          error: "Order must be delivered before you can confirm delivery"
+          error: "Order must be shipped or delivered before you can confirm delivery"
         };
       }
       return { isValid: true };
@@ -280,6 +280,7 @@ export function calculateOrderActions(order: {
   canCancel: boolean;
   canConfirmDelivery: boolean;
   canRequestReturn: boolean;
+  canOpenDispute: boolean;
   cancelReason?: string;
   returnReason?: string;
 } {
@@ -299,7 +300,7 @@ export function calculateOrderActions(order: {
         : ["PROCESSING", "SHIPPED", "DELIVERED"].includes(order.status)
         ? "Order already shipped or delivered"
         : undefined,
-    canConfirmDelivery: order.status === "DELIVERED",
+    canConfirmDelivery: ["SHIPPED", "DELIVERED"].includes(order.status),
     canRequestReturn:
       order.status === "DELIVERY_CONFIRMED" &&
       (hoursSinceDelivery ?? 25) <= 24,
@@ -307,5 +308,10 @@ export function calculateOrderActions(order: {
       (hoursSinceDelivery ?? 25) > 24
         ? "Return window expired (must be within 24 hours of delivery confirmation)"
         : undefined,
+    // Dispute window: 7 days after delivery confirmation
+    canOpenDispute:
+      order.status === "DELIVERY_CONFIRMED" &&
+      order.deliveryConfirmedAt !== null &&
+      (hoursSinceDelivery ?? 0) <= 7 * 24,
   };
 }

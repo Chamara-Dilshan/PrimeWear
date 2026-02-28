@@ -71,6 +71,26 @@ export async function GET(
       );
     }
 
+    // Fetch visible reviews with customer info
+    const reviews = await prisma.productReview.findMany({
+      where: { productId: product.id, isVisible: true },
+      include: {
+        customer: {
+          include: {
+            user: { select: { firstName: true, lastName: true } },
+          },
+        },
+      },
+      orderBy: { createdAt: "desc" },
+      take: 20,
+    });
+
+    const reviewCount = reviews.length;
+    const avgRating =
+      reviewCount > 0
+        ? reviews.reduce((sum, r) => sum + r.rating, 0) / reviewCount
+        : 0;
+
     // Get related products (same category, different product)
     const relatedProducts = await prisma.product.findMany({
       where: {
@@ -123,8 +143,22 @@ export async function GET(
             ...v,
             priceAdjustment: v.priceAdjustment ? v.priceAdjustment.toNumber() : null,
           })),
-          averageRating: 0,
-          reviewCount: 0,
+          averageRating: Math.round(avgRating * 10) / 10,
+          reviewCount,
+          reviews: reviews.map((r) => ({
+            id: r.id,
+            rating: r.rating,
+            comment: r.comment,
+            createdAt: r.createdAt.toISOString(),
+            customer: {
+              user: {
+                name:
+                  [r.customer.user.firstName, r.customer.user.lastName]
+                    .filter(Boolean)
+                    .join(" ") || null,
+              },
+            },
+          })),
         },
         relatedProducts: relatedProducts.map((p) => ({
           ...p,

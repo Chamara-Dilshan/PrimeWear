@@ -44,7 +44,7 @@ export async function POST(req: NextRequest) {
         {
           success: false,
           error: 'Validation failed',
-          details: validation.error.errors,
+          details: validation.error.issues,
         },
         { status: 400 }
       );
@@ -106,7 +106,7 @@ export async function POST(req: NextRequest) {
       data: {
         orderId,
         status: 'DISPUTED',
-        notes: `Dispute opened: ${reason}`,
+        note: `Dispute opened: ${reason}`,
       },
     });
 
@@ -122,13 +122,12 @@ export async function POST(req: NextRequest) {
           userId: admin.id,
           type: NotificationType.DISPUTE_CREATED,
           title: 'New Dispute Filed',
-          message: `A dispute has been filed for order ${order.orderNumber}. Reason: ${reason}`,
+          message: `A dispute has been filed for order ${dispute.order.orderNumber}. Reason: ${reason}`,
           link: `/admin/disputes/${dispute.id}`,
           metadata: {
             disputeId: dispute.id,
             orderId,
-            orderNumber: order.orderNumber,
-            reason,
+            orderNumber: dispute.order.orderNumber,
           },
         });
       }
@@ -199,7 +198,7 @@ export async function GET(req: NextRequest) {
         {
           success: false,
           error: 'Invalid query parameters',
-          details: validation.error.errors,
+          details: validation.error.issues,
         },
         { status: 400 }
       );

@@ -53,7 +53,7 @@ export async function GET(request: NextRequest) {
 
     if (!validation.success) {
       return NextResponse.json(
-        { success: false, error: validation.error.errors[0].message },
+        { success: false, error: validation.error.issues[0].message },
         { status: 400 }
       );
     }
@@ -161,6 +161,10 @@ export async function GET(request: NextRequest) {
       shippingAmount: order.shippingAmount.toNumber(),
       totalAmount: order.totalAmount.toNumber(),
       itemCount: order._count.items,
+      itemImages: order.items.map((item) => {
+        const snapshot = item.productSnapshot as any;
+        return (snapshot?.images?.[0] as string) ?? null;
+      }),
       previewItems: order.items.map((item) => ({
         id: item.id,
         productSnapshot: item.productSnapshot,

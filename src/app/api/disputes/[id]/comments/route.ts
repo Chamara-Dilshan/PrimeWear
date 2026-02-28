@@ -17,7 +17,7 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const disputeId = params.id;
+    const { id: disputeId } = await params;
 
     // Verify authentication
     const user = requireAuth(req);
@@ -40,8 +40,14 @@ export async function POST(
       include: {
         order: {
           select: {
-            userId: true,
             orderNumber: true,
+            customer: {
+              select: {
+                user: {
+                  select: { id: true },
+                },
+              },
+            },
           },
         },
       },
@@ -75,7 +81,7 @@ export async function POST(
         {
           success: false,
           error: 'Validation failed',
-          details: validation.error.errors,
+          details: validation.error.issues,
         },
         { status: 400 }
       );
@@ -117,7 +123,7 @@ export async function POST(
       if (user.role === 'ADMIN') {
         // Admin commented, notify customer
         await createNotification({
-          userId: dispute.order.userId,
+          userId: dispute.order.customer.user.id,
           type: NotificationType.DISPUTE_COMMENT_ADDED,
           title: 'New Dispute Comment',
           message: `Admin has added a comment to your dispute for order ${dispute.order.orderNumber}.`,
@@ -185,7 +191,7 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const disputeId = params.id;
+    const { id: disputeId } = await params;
 
     // Verify authentication
     const user = requireAuth(req);

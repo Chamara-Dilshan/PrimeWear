@@ -22,7 +22,7 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const disputeId = params.id;
+    const { id: disputeId } = await params;
 
     // Verify authentication - Admin only
     const user = requireAdmin(req);
@@ -36,7 +36,7 @@ export async function PATCH(
         {
           success: false,
           error: 'Validation failed',
-          details: validation.error.errors,
+          details: validation.error.issues,
         },
         { status: 400 }
       );
@@ -136,6 +136,7 @@ export async function PATCH(
               include: {
                 user: {
                   select: {
+                    id: true,
                     email: true,
                     firstName: true,
                     lastName: true,
@@ -211,7 +212,7 @@ export async function PATCH(
     // Send notification to customer about dispute resolution
     try {
       await createNotification({
-        userId: dispute.userId,
+        userId: result.customer.user.id,
         type: NotificationType.DISPUTE_RESOLVED,
         title: 'Dispute Resolved',
         message: `Your dispute for order ${dispute.order.orderNumber} has been resolved: ${resolutionType}${resolutionType === ResolutionType.CUSTOMER_FAVOR && refundAmount ? `. Refund of Rs. ${refundAmount.toFixed(2)} has been processed.` : '.'}`,

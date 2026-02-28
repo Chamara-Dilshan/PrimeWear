@@ -4,13 +4,9 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { UserRole } from '@prisma/client';
 import { getChatRoomById } from '@/lib/chat/roomManager';
 import { prisma } from '@/lib/prisma';
-
-/**
- * Require admin role
- */
+import { requireAdmin, handleAuthError } from '@/lib/auth-helpers';
 
 
 /**
@@ -27,7 +23,7 @@ export async function GET(
 
     // Check admin authorization
     // Auth check
-    const user = requireAdmin(request);
+    requireAdmin(request);
 
         // Get room details
     const room = await getChatRoomById(roomId);

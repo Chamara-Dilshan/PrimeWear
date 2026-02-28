@@ -17,9 +17,9 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 
 interface OrderDetailsPageProps {
-  params: {
+  params: Promise<{
     orderId: string;
-  };
+  }>;
 }
 
 async function getOrderDetails(orderId: string) {
@@ -57,14 +57,15 @@ async function getOrderDetails(orderId: string) {
 export default async function OrderDetailsPage({
   params,
 }: OrderDetailsPageProps) {
-  const { orderId } = params;
+  const { orderId } = await params;
   const orderData = await getOrderDetails(orderId);
 
   if (!orderData) {
     redirect("/orders");
   }
 
-  const { order, statusHistory, itemsByVendor, actions } = orderData;
+  const { order } = orderData;
+  const { statusHistory, itemsByVendor, actions } = order;
 
   return (
     <div className="container max-w-6xl mx-auto px-4 py-8">
@@ -157,6 +158,8 @@ export default async function OrderDetailsPage({
                   key={vendorGroup.vendorName}
                   vendorName={vendorGroup.vendorName}
                   items={vendorGroup.items}
+                  chatRoomId={vendorGroup.chatRoomId}
+                  orderStatus={order.status}
                 />
               ))}
             </div>
@@ -182,18 +185,18 @@ export default async function OrderDetailsPage({
               Shipping Address
             </h3>
             <div className="text-sm space-y-1">
-              <p className="font-medium">{order.shippingSnapshot.fullName}</p>
-              <p>{order.shippingSnapshot.addressLine1}</p>
-              {order.shippingSnapshot.addressLine2 && (
-                <p>{order.shippingSnapshot.addressLine2}</p>
+              <p className="font-medium">{order.shippingAddress.fullName}</p>
+              <p>{order.shippingAddress.addressLine1}</p>
+              {order.shippingAddress.addressLine2 && (
+                <p>{order.shippingAddress.addressLine2}</p>
               )}
               <p>
-                {order.shippingSnapshot.city},{" "}
-                {order.shippingSnapshot.province}
+                {order.shippingAddress.city},{" "}
+                {order.shippingAddress.province}
               </p>
-              <p>{order.shippingSnapshot.postalCode}</p>
+              <p>{order.shippingAddress.postalCode}</p>
               <p className="pt-2 text-muted-foreground">
-                Phone: {order.shippingSnapshot.phone}
+                Phone: {order.shippingAddress.phone}
               </p>
             </div>
           </div>
@@ -215,7 +218,7 @@ export default async function OrderDetailsPage({
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Method:</span>
                   <span className="font-medium">
-                    {order.payment.paymentMethod}
+                    {order.payment.method}
                   </span>
                 </div>
                 {order.payment.paidAt && (

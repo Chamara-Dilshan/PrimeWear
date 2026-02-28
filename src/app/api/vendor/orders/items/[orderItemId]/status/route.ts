@@ -81,6 +81,18 @@ export async function PATCH(
 
     const { orderItemId } = await params;
 
+    // Look up vendor record (TokenPayload has no vendorId field)
+    const vendorRecord = await prisma.vendor.findUnique({
+      where: { userId: user.userId },
+    });
+    if (!vendorRecord) {
+      return NextResponse.json(
+        { success: false, error: "Vendor not found" },
+        { status: 404 }
+      );
+    }
+    const vendorId = vendorRecord.id;
+
     // Validate request body
     const body = await request.json();
     const validation = updateOrderItemStatusSchema.safeParse(body);
@@ -94,11 +106,19 @@ export async function PATCH(
 
     const { status, trackingNumber, trackingUrl, note } = validation.data;
 
-    // Fetch order item
+    // Fetch order item with customer info for notification
     const orderItem = await prisma.orderItem.findUnique({
       where: { id: orderItemId },
       include: {
-        order: true,
+        order: {
+          include: {
+            customer: {
+              include: {
+                user: { select: { id: true } },
+              },
+            },
+          },
+        },
       },
     });
 
@@ -189,7 +209,7 @@ export async function PATCH(
         : `Your order item from ${orderItem.vendorName} is being processed.`;
 
       await createNotification({
-        userId: orderItem.order.userId,
+        userId: orderItem.order.customer.user.id,
         type: notificationType,
         title: status === "SHIPPED" ? "Item Shipped" : "Item Processing",
         message,

@@ -48,9 +48,16 @@ export async function POST(
 
     const { orderId } = await params;
 
-    // Fetch order
+    // Fetch order with customer info for notification
     const order = await prisma.order.findUnique({
       where: { id: orderId },
+      include: {
+        customer: {
+          include: {
+            user: { select: { id: true } },
+          },
+        },
+      },
     });
 
     if (!order) {
@@ -137,7 +144,7 @@ export async function POST(
     // Send notification to customer
     try {
       await createNotification({
-        userId: order.userId,
+        userId: order.customer.user.id,
         type: NotificationType.ORDER_DELIVERY_CONFIRMED,
         title: "Delivery Confirmed",
         message: `Thank you for confirming delivery of order ${order.orderNumber}. Your order is now complete.`,

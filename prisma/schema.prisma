@@ -2,7 +2,8 @@
 // Admin-controlled marketplace with escrow payments
 
 generator client {
-  provider = "prisma-client-js"
+  provider   = "prisma-client-js"
+  engineType = "binary"
 }
 
 datasource db {
@@ -187,6 +188,7 @@ model Customer {
   disputes          Dispute[]
   chatRooms         ChatRoom[]
   couponUsages      CouponUsage[]
+  reviews           ProductReview[]
 }
 
 model ShippingAddress {
@@ -255,6 +257,7 @@ model Product {
   // Relations
   orderItems OrderItem[]
   cartItems  CartItem[]
+  reviews    ProductReview[]
 
   @@index([vendorId])
   @@index([categoryId])
@@ -373,6 +376,7 @@ model OrderItem {
   // Relations
   chatRoom           ChatRoom?
   walletTransactions WalletTransaction[]
+  review             ProductReview?
 
   @@index([orderId])
   @@index([vendorId])
@@ -637,6 +641,27 @@ model NotificationPreference {
   updatedAt DateTime @updatedAt
 
   @@map("notification_preferences")
+}
+
+// ==================== REVIEW MODELS ====================
+
+model ProductReview {
+  id          String   @id @default(cuid())
+  productId   String
+  product     Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  customerId  String
+  customer    Customer @relation(fields: [customerId], references: [id])
+  orderItemId String   @unique // One review per order item
+  orderItem   OrderItem @relation(fields: [orderItemId], references: [id])
+  rating      Int      // 1-5
+  comment     String?
+  isVisible   Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([productId])
+  @@index([customerId])
+  @@map("product_reviews")
 }
 
 // ==================== OTP MODEL ====================

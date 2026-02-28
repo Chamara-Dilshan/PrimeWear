@@ -11,17 +11,6 @@ import { overrideOrderStatusSchema } from "@/lib/validations/order";
 import { createNotification } from "@/lib/notifications/notificationService";
 import { NotificationType } from "@/types/notification";
 
-async function requireAdmin(request: NextRequest): Promise<string | null> {
-  const userId = request.headers.get("X-User-Id");
-  const userRole = request.headers.get("X-User-Role");
-
-  if (!userId || userRole !== UserRole.ADMIN) {
-    return null;
-  }
-
-  return userId;
-}
-
 /**
  * PATCH /api/admin/orders/[orderId]/status
  * Override order status (admin only)
@@ -31,14 +20,8 @@ export async function PATCH(
   { params }: { params: Promise<{ orderId: string }> }
 ) {
   try {
-    const adminUserId = await requireAdmin(request);
-
-    if (!adminUserId) {
-      return NextResponse.json(
-        { success: false, error: "Unauthorized" },
-        { status: 401 }
-      );
-    }
+    const adminUser = requireAdmin(request);
+    const adminUserId = adminUser.userId;
 
     const { orderId } = await params;
 
@@ -48,16 +31,23 @@ export async function PATCH(
 
     if (!validation.success) {
       return NextResponse.json(
-        { success: false, error: validation.error.errors[0].message },
+        { success: false, error: validation.error.issues[0].message },
         { status: 400 }
       );
     }
 
     const { status, reason } = validation.data;
 
-    // Fetch order
+    // Fetch order with customer info for notification
     const order = await prisma.order.findUnique({
       where: { id: orderId },
+      include: {
+        customer: {
+          include: {
+            user: { select: { id: true } },
+          },
+        },
+      },
     });
 
     if (!order) {
@@ -123,7 +113,7 @@ export async function PATCH(
     // Send notification to customer about status override
     try {
       await createNotification({
-        userId: order.userId,
+        userId: order.customer.user.id,
         type: NotificationType.ORDER_STATUS_OVERRIDE,
         title: "Order Status Updated",
         message: `Your order ${order.orderNumber} status has been updated to ${status} by admin.${reason ? ` Reason: ${reason}` : ""}`,

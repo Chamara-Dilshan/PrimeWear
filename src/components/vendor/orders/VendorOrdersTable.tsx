@@ -17,9 +17,9 @@ interface VendorOrder {
   orderNumber: string;
   status: OrderStatus;
   createdAt: string;
-  customerEmail: string;
-  vendorItemsTotal: number;
-  vendorItemCount: number;
+  customer: { email: string };
+  vendorTotal: number;
+  vendorItems: { id: string }[];
 }
 
 interface VendorOrdersTableProps {
@@ -61,14 +61,14 @@ export function VendorOrdersTable({ orders }: VendorOrdersTableProps) {
                     {order.orderNumber}
                   </Link>
                 </td>
-                <td className="px-4 py-3 text-sm">{order.customerEmail}</td>
+                <td className="px-4 py-3 text-sm">{order.customer.email}</td>
                 <td className="px-4 py-3 text-sm text-muted-foreground">
                   {format(new Date(order.createdAt), "PPP")}
                 </td>
-                <td className="px-4 py-3 text-sm">{order.vendorItemCount}</td>
+                <td className="px-4 py-3 text-sm">{order.vendorItems.length}</td>
                 <td className="px-4 py-3 text-sm font-medium">
                   Rs.{" "}
-                  {order.vendorItemsTotal.toLocaleString("en-LK", {
+                  {order.vendorTotal.toLocaleString("en-LK", {
                     minimumFractionDigits: 2,
                     maximumFractionDigits: 2,
                   })}

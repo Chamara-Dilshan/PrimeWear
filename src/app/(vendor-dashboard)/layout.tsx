@@ -8,6 +8,7 @@ import { useIsMobile } from "@/hooks/useMediaQuery";
 import { VendorSidebar } from "@/components/layout/vendor/VendorSidebar";
 import { VendorHeader } from "@/components/layout/vendor/VendorHeader";
 import { VendorMobileNav } from "@/components/layout/vendor/VendorMobileNav";
+import { ChatDialog } from "@/components/chat/ChatDialog";
 
 export default function VendorDashboardLayout({
   children,
@@ -67,6 +68,9 @@ export default function VendorDashboardLayout({
           {children}
         </main>
       </div>
+
+      {/* Chat Dialog — rendered once at layout level */}
+      <ChatDialog />
     </div>
   );
 }

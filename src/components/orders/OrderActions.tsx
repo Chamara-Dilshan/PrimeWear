@@ -10,7 +10,8 @@ import { Button } from "@/components/ui/button";
 import { CancelOrderDialog } from "./CancelOrderDialog";
 import { ConfirmDeliveryDialog } from "./ConfirmDeliveryDialog";
 import { RequestReturnDialog } from "./RequestReturnDialog";
-import { XCircle, CheckCircle, PackageX } from "lucide-react";
+import { DisputeForm } from "@/components/disputes/DisputeForm";
+import { XCircle, CheckCircle, PackageX, AlertTriangle } from "lucide-react";
 
 interface OrderActionsProps {
   orderId: string;
@@ -19,6 +20,7 @@ interface OrderActionsProps {
     canCancel: boolean;
     canConfirmDelivery: boolean;
     canRequestReturn: boolean;
+    canOpenDispute: boolean;
     cancelReason?: string;
     returnReason?: string;
   };
@@ -35,12 +37,14 @@ export function OrderActions({
   const [confirmDeliveryDialogOpen, setConfirmDeliveryDialogOpen] =
     useState(false);
   const [returnDialogOpen, setReturnDialogOpen] = useState(false);
+  const [disputeDialogOpen, setDisputeDialogOpen] = useState(false);
 
   // If no actions available, don't render anything
   if (
     !actions.canCancel &&
     !actions.canConfirmDelivery &&
-    !actions.canRequestReturn
+    !actions.canRequestReturn &&
+    !actions.canOpenDispute
   ) {
     return null;
   }
@@ -103,6 +107,26 @@ export function OrderActions({
             open={returnDialogOpen}
             onOpenChange={setReturnDialogOpen}
             onSuccess={onSuccess}
+          />
+        </>
+      )}
+
+      {/* Open Dispute */}
+      {actions.canOpenDispute && (
+        <>
+          <Button
+            variant="outline"
+            className="border-orange-500 text-orange-600 hover:bg-orange-50"
+            onClick={() => setDisputeDialogOpen(true)}
+          >
+            <AlertTriangle className="w-4 h-4 mr-2" />
+            Open Dispute
+          </Button>
+          <DisputeForm
+            orderId={orderId}
+            orderNumber={orderNumber}
+            open={disputeDialogOpen}
+            onOpenChange={setDisputeDialogOpen}
           />
         </>
       )}

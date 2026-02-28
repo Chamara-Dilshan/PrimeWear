@@ -5,6 +5,7 @@ import { StorefrontHeader } from "@/components/layout/storefront/StorefrontHeade
 import { StorefrontNav } from "@/components/layout/storefront/StorefrontNav";
 import { StorefrontFooter } from "@/components/layout/storefront/StorefrontFooter";
 import { MobileMenu } from "@/components/layout/storefront/MobileMenu";
+import { ChatDialog } from "@/components/chat/ChatDialog";
 
 export default function StorefrontLayout({
   children,
@@ -36,6 +37,9 @@ export default function StorefrontLayout({
 
       {/* Footer */}
       <StorefrontFooter />
+
+      {/* Chat Dialog — rendered once at layout level */}
+      <ChatDialog />
     </div>
   );
 }
