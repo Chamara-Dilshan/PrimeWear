@@ -6,7 +6,7 @@
     "dev": "next dev",
     "dev:socket": "tsx watch --env-file=.env server/index.ts",
     "dev:all": "concurrently \"npm run dev\" \"npm run dev:socket\"",
-    "build": "next build",
+    "build": "prisma generate && next build",
     "start": "next start",
     "lint": "next lint",
     "db:generate": "prisma generate",
