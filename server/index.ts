@@ -17,7 +17,8 @@ import { registerNotificationHandlers } from './socket/handlers/notificationHand
 import { startTrackingPoller } from './services/trackingPoller';
 
 // Environment variables
-const PORT = process.env.SOCKET_PORT || 3001;
+// Railway injects PORT automatically; SOCKET_PORT is used in local dev
+const PORT = process.env.PORT || process.env.SOCKET_PORT || 3001;
 const REDIS_URL = process.env.REDIS_URL;
 const NEXT_PUBLIC_APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
 
