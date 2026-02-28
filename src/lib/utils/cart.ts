@@ -106,8 +106,9 @@ export function convertDbCartItems(dbItems: DbCartItem[]): CartItem[] {
 /**
  * Format price for display (with currency)
  */
-export function formatPrice(price: number): string {
-  return `Rs. ${price.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",")}`;
+export function formatPrice(price: number | undefined | null): string {
+  const safePrice = typeof price === "number" && !isNaN(price) ? price : 0;
+  return `Rs. ${safePrice.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",")}`;
 }
 
 /**

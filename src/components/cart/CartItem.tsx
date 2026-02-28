@@ -66,6 +66,7 @@ export function CartItem({ item, showVendor = true }: CartItemProps) {
           src={item.productImage}
           alt={item.productName}
           fill
+          sizes="96px"
           className="object-cover"
         />
       </Link>
@@ -97,7 +98,7 @@ export function CartItem({ item, showVendor = true }: CartItemProps) {
         {/* Price */}
         <div className="flex items-center gap-2 mb-3">
           <p className="font-semibold">{formatPrice(item.finalPrice)}</p>
-          {item.priceAdjustment && item.priceAdjustment !== 0 && (
+          {!!item.priceAdjustment && item.priceAdjustment !== 0 && (
             <span className="text-xs text-muted-foreground">
               (Base: {formatPrice(item.basePrice)})
             </span>

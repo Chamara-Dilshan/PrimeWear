@@ -5,6 +5,7 @@ import { formatPrice } from "@/lib/utils/cart";
 import {
   Sheet,
   SheetContent,
+  SheetDescription,
   SheetHeader,
   SheetTitle,
   SheetFooter,
@@ -44,6 +45,9 @@ export function CartDrawer({ open, onOpenChange }: CartDrawerProps) {
             <ShoppingBag className="h-5 w-5" />
             Shopping Cart ({itemCount})
           </SheetTitle>
+          <SheetDescription className="sr-only">
+            Your shopping cart items
+          </SheetDescription>
         </SheetHeader>
 
         {items.length === 0 ? (
@@ -75,6 +79,7 @@ export function CartDrawer({ open, onOpenChange }: CartDrawerProps) {
                         src={item.productImage}
                         alt={item.productName}
                         fill
+                        sizes="80px"
                         className="object-cover"
                       />
                     </Link>
@@ -97,7 +102,7 @@ export function CartDrawer({ open, onOpenChange }: CartDrawerProps) {
 
                       <div className="flex items-center justify-between mt-2">
                         <p className="text-sm font-medium">
-                          {formatPrice(item.finalPrice)}
+                          {formatPrice(item.finalPrice ?? item.basePrice)}
                         </p>
                         <p className="text-xs text-muted-foreground">
                           Qty: {item.quantity}

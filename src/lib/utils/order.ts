@@ -194,21 +194,33 @@ export function validateStatusTransition(
       return { isValid: true };
     }
 
+    // Customer marks order as DELIVERED (new canonical delivery confirmation)
+    if (newStatus === "DELIVERED") {
+      if (currentStatus !== "SHIPPED") {
+        return {
+          isValid: false,
+          error: "Order must be shipped before you can confirm delivery"
+        };
+      }
+      return { isValid: true };
+    }
+
+    // Legacy: DELIVERY_CONFIRMED still accepted for backward compatibility
     if (newStatus === "DELIVERY_CONFIRMED") {
       if (!["SHIPPED", "DELIVERED"].includes(currentStatus)) {
         return {
           isValid: false,
-          error: "Order must be shipped or delivered before you can confirm delivery"
+          error: "Order must be shipped before you can confirm delivery"
         };
       }
       return { isValid: true };
     }
 
     if (newStatus === "RETURN_REQUESTED") {
-      if (currentStatus !== "DELIVERY_CONFIRMED") {
+      if (!["DELIVERY_CONFIRMED", "DELIVERED"].includes(currentStatus)) {
         return {
           isValid: false,
-          error: "Can only request return after confirming delivery"
+          error: "Can only request return after delivery is confirmed"
         };
       }
 
@@ -300,17 +312,19 @@ export function calculateOrderActions(order: {
         : ["PROCESSING", "SHIPPED", "DELIVERED"].includes(order.status)
         ? "Order already shipped or delivered"
         : undefined,
-    canConfirmDelivery: ["SHIPPED", "DELIVERED"].includes(order.status),
+    // Customer can confirm from SHIPPED only (clicking → DELIVERED + funds released)
+    // DELIVERED and DELIVERY_CONFIRMED are already terminal delivery states
+    canConfirmDelivery: order.status === "SHIPPED",
     canRequestReturn:
-      order.status === "DELIVERY_CONFIRMED" &&
+      ["DELIVERED", "DELIVERY_CONFIRMED"].includes(order.status) &&
       (hoursSinceDelivery ?? 25) <= 24,
     returnReason:
       (hoursSinceDelivery ?? 25) > 24
         ? "Return window expired (must be within 24 hours of delivery confirmation)"
         : undefined,
-    // Dispute window: 7 days after delivery confirmation
+    // Dispute window: 7 days after delivery confirmation (DELIVERED or DELIVERY_CONFIRMED)
     canOpenDispute:
-      order.status === "DELIVERY_CONFIRMED" &&
+      ["DELIVERED", "DELIVERY_CONFIRMED"].includes(order.status) &&
       order.deliveryConfirmedAt !== null &&
       (hoursSinceDelivery ?? 0) <= 7 * 24,
   };

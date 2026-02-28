@@ -8,6 +8,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireAdmin, handleAuthError } from "@/lib/auth-helpers";
 import { prisma } from "@/lib/prisma";
 import { overrideOrderStatusSchema } from "@/lib/validations/order";
+import { releaseVendorFunds } from "@/lib/utils/wallet";
 import { createNotification } from "@/lib/notifications/notificationService";
 import { NotificationType } from "@/types/notification";
 
@@ -65,6 +66,13 @@ export async function PATCH(
       );
     }
 
+    // Determine if this override should release vendor funds.
+    // Release when admin sets DELIVERED (or legacy DELIVERY_CONFIRMED) and
+    // funds have not been released yet (deliveryConfirmedAt is null).
+    const shouldReleaseFunds =
+      (status === "DELIVERED" || status === "DELIVERY_CONFIRMED") &&
+      order.deliveryConfirmedAt === null;
+
     // Update order status in atomic transaction
     const result = await prisma.$transaction(async (tx) => {
       // 1. Update order status
@@ -77,7 +85,7 @@ export async function PATCH(
             cancelReason: reason,
             cancelledAt: new Date(),
           }),
-          ...(status === "DELIVERY_CONFIRMED" && {
+          ...((status === "DELIVERED" || status === "DELIVERY_CONFIRMED") && {
             deliveryConfirmedAt: new Date(),
           }),
         },
@@ -99,6 +107,11 @@ export async function PATCH(
         where: { orderId },
         data: { status },
       });
+
+      // 4. Release vendor funds if marking as delivered and funds not yet released
+      if (shouldReleaseFunds) {
+        await releaseVendorFunds(orderId, order.orderNumber, tx);
+      }
 
       return updatedOrder;
     });

@@ -14,6 +14,7 @@ import { registerChatHandlers } from './socket/handlers/chatHandler';
 import { registerRoomHandlers, autoJoinUserRooms, handleUserDisconnect } from './socket/handlers/roomHandler';
 import { registerTypingHandlers } from './socket/handlers/typingHandler';
 import { registerNotificationHandlers } from './socket/handlers/notificationHandler';
+import { startTrackingPoller } from './services/trackingPoller';
 
 // Environment variables
 const PORT = process.env.SOCKET_PORT || 3001;
@@ -114,6 +115,9 @@ async function bootstrap() {
     io.engine.on('connection_error', (err) => {
       console.error('[Socket.io] Connection error:', err);
     });
+
+    // Start auto-tracking polling (disabled if AFTERSHIP_API_KEY not set)
+    startTrackingPoller();
 
     // Start server
     httpServer.listen(PORT, () => {

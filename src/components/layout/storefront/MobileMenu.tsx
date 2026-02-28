@@ -4,7 +4,7 @@ import { useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
 import { X, LogOut, LogIn, User } from "lucide-react";
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -54,6 +54,9 @@ export function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
           <SheetTitle>
             <Logo variant="full" href="/" />
           </SheetTitle>
+          <SheetDescription className="sr-only">
+            Navigation menu
+          </SheetDescription>
         </SheetHeader>
 
         <Separator />

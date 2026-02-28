@@ -1,16 +1,16 @@
 /**
  * Confirm delivery API
- * POST /api/orders/[orderId]/confirm-delivery - Customer confirms delivery
- * CRITICAL: This endpoint releases funds from pendingBalance to availableBalance
+ * POST /api/orders/[orderId]/confirm-delivery
+ *
+ * Customer confirms receipt of their order.
+ * Sets order status to DELIVERED and releases vendor funds from escrow.
+ * Idempotent: safe to call multiple times.
  */
 
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { UserRole } from "@prisma/client";
-import { validateStatusTransition } from "@/lib/utils/order";
-import { releaseVendorFunds } from "@/lib/utils/wallet";
-import { createNotification } from "@/lib/notifications/notificationService";
-import { NotificationType } from "@/types/notification";
+import { markOrderDelivered } from "@/lib/utils/markOrderDelivered";
 
 async function requireCustomer(request: NextRequest): Promise<string | null> {
   const userId = request.headers.get("X-User-Id");
@@ -29,8 +29,7 @@ async function requireCustomer(request: NextRequest): Promise<string | null> {
 
 /**
  * POST /api/orders/[orderId]/confirm-delivery
- * Customer confirms delivery of order
- * Releases funds from vendor pendingBalance to availableBalance
+ * Customer confirms delivery → order becomes DELIVERED → vendor funds released
  */
 export async function POST(
   request: NextRequest,
@@ -48,15 +47,15 @@ export async function POST(
 
     const { orderId } = await params;
 
-    // Fetch order with customer info for notification
+    // Verify order exists and belongs to this customer
     const order = await prisma.order.findUnique({
       where: { id: orderId },
-      include: {
-        customer: {
-          include: {
-            user: { select: { id: true } },
-          },
-        },
+      select: {
+        id: true,
+        customerId: true,
+        orderNumber: true,
+        status: true,
+        deliveryConfirmedAt: true,
       },
     });
 
@@ -67,7 +66,6 @@ export async function POST(
       );
     }
 
-    // Verify order belongs to customer
     if (order.customerId !== customerId) {
       return NextResponse.json(
         { success: false, error: "Order does not belong to you" },
@@ -75,98 +73,38 @@ export async function POST(
       );
     }
 
-    // Check if already confirmed (idempotency)
-    if (order.deliveryConfirmedAt !== null) {
-      return NextResponse.json({
-        success: true,
-        data: {
-          message: "Delivery already confirmed",
-          order: {
-            id: order.id,
-            orderNumber: order.orderNumber,
-            status: order.status,
-            deliveryConfirmedAt: order.deliveryConfirmedAt.toISOString(),
-          },
-        },
-      });
-    }
+    // Delegate to shared utility (handles idempotency, validation, fund release, notification)
+    const result = await markOrderDelivered(orderId, "customer");
 
-    // Validate status transition
-    const transitionValidation = validateStatusTransition(
-      order.status,
-      "DELIVERY_CONFIRMED",
-      "CUSTOMER",
-      order.createdAt,
-      order.deliveryConfirmedAt
-    );
-
-    if (!transitionValidation.isValid) {
+    if (!result.success) {
       return NextResponse.json(
-        { success: false, error: transitionValidation.error },
+        { success: false, error: result.message },
         { status: 400 }
       );
     }
 
-    // Confirm delivery and release funds in atomic transaction
-    const result = await prisma.$transaction(async (tx) => {
-      // 1. Update order status and set confirmation timestamp
-      const updatedOrder = await tx.order.update({
-        where: { id: orderId },
-        data: {
-          status: "DELIVERY_CONFIRMED",
-          deliveryConfirmedAt: new Date(),
-        },
-      });
-
-      // 2. Create status history
-      await tx.orderStatusHistory.create({
-        data: {
-          orderId,
-          status: "DELIVERY_CONFIRMED",
-          note: "Customer confirmed delivery",
-          createdBy: null, // Customer action
-        },
-      });
-
-      // 3. CRITICAL: Release vendor funds
-      // Moves funds from pendingBalance to availableBalance
-      await releaseVendorFunds(orderId, order.orderNumber, tx);
-
-      return updatedOrder;
+    // Re-fetch updated order for response
+    const updatedOrder = await prisma.order.findUnique({
+      where: { id: orderId },
+      select: {
+        id: true,
+        orderNumber: true,
+        status: true,
+        deliveryConfirmedAt: true,
+      },
     });
-
-    console.log(`[Order] Delivery confirmed for order ${order.orderNumber}:`, {
-      orderId,
-      customerId,
-      confirmedAt: result.deliveryConfirmedAt?.toISOString(),
-    });
-
-    // Send notification to customer
-    try {
-      await createNotification({
-        userId: order.customer.user.id,
-        type: NotificationType.ORDER_DELIVERY_CONFIRMED,
-        title: "Delivery Confirmed",
-        message: `Thank you for confirming delivery of order ${order.orderNumber}. Your order is now complete.`,
-        link: `/orders/${orderId}`,
-        metadata: {
-          orderId,
-          orderNumber: order.orderNumber,
-        },
-      });
-    } catch (notifError) {
-      console.error("[Order Confirm Delivery] Failed to send notification:", notifError);
-    }
 
     return NextResponse.json({
       success: true,
       data: {
         order: {
-          id: result.id,
-          orderNumber: result.orderNumber,
-          status: result.status,
-          deliveryConfirmedAt: result.deliveryConfirmedAt?.toISOString() || null,
+          id: updatedOrder!.id,
+          orderNumber: updatedOrder!.orderNumber,
+          status: updatedOrder!.status,
+          deliveryConfirmedAt:
+            updatedOrder!.deliveryConfirmedAt?.toISOString() || null,
         },
+        alreadyDelivered: result.alreadyDelivered || false,
       },
     });
   } catch (error) {
