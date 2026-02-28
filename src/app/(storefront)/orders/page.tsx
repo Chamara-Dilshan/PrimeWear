@@ -7,7 +7,6 @@ import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
 import { tokenUtils } from "@/lib/auth";
 import { OrderCard } from "@/components/orders/OrderCard";
-import { OrderStatusBadge } from "@/components/orders/OrderStatusBadge";
 import { OrderStatus } from "@prisma/client";
 import { Package } from "lucide-react";
 import Link from "next/link";
@@ -79,7 +78,7 @@ export default async function OrdersPage({
   const currentStatus = resolvedParams.status;
 
   return (
-    <div className="container max-w-6xl mx-auto px-4 py-8">
+    <div className="container mx-auto px-4 py-8">
       {/* Header */}
       <div className="mb-8">
         <h1 className="text-3xl font-bold mb-2">My Orders</h1>

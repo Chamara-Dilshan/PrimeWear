@@ -8,7 +8,6 @@ import {
   SheetDescription,
   SheetHeader,
   SheetTitle,
-  SheetFooter,
 } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -130,15 +129,15 @@ export function CartDrawer({ open, onOpenChange }: CartDrawerProps) {
             <Separator />
 
             {/* Footer */}
-            <SheetFooter className="flex-col space-y-4">
+            <div className="flex flex-col gap-4 pt-2">
               {/* Subtotal */}
-              <div className="flex justify-between text-base font-semibold">
+              <div className="flex items-center justify-between text-base font-semibold">
                 <span>Subtotal</span>
                 <span>{formatPrice(subtotal)}</span>
               </div>
 
               {/* Buttons */}
-              <div className="space-y-2 w-full">
+              <div className="flex flex-col gap-2">
                 <Button
                   size="lg"
                   className="w-full"
@@ -162,7 +161,7 @@ export function CartDrawer({ open, onOpenChange }: CartDrawerProps) {
               <p className="text-xs text-center text-muted-foreground">
                 Shipping and taxes calculated at checkout
               </p>
-            </SheetFooter>
+            </div>
           </>
         )}
       </SheetContent>

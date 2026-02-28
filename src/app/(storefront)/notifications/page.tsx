@@ -119,7 +119,7 @@ export default function NotificationsPage() {
   const totalPages = Math.ceil(totalCount / pageSize);
 
   return (
-    <div className="container max-w-4xl py-8 px-4 md:px-6">
+    <div className="container mx-auto px-4 py-8">
       {/* Header */}
       <div className="space-y-4 mb-6">
         <div className="flex items-center gap-3">
